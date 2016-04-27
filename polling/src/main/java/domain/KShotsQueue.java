@@ -24,42 +24,9 @@ public class KShotsQueue extends Queue{
     private Transition serviceQ;
     private Transition arrival;
     
-    public KShotsQueue(String queueName,int tokens, double lambda, int K){
+    public KShotsQueue(String queueName,Integer tokens, Double mu, Double lambda, Integer K){
         
-        super(queueName,tokens,lambda);
-        this.K = K;
-        
-    }
-    
-    public KShotsQueue(String queueName,Integer tokens, Double lambda, Integer K){
-        
-        super(queueName,tokens,(double)lambda);
-        this.K = K;
-        
-    }
-    
-    public KShotsQueue(String queueName,Integer tokens, Double lambda, Integer K, double mu, double gamma){
-        
-        super(queueName,tokens,(double)lambda,mu,gamma);
-        this.K = K;
-        
-    }
-
-    public KShotsQueue(String queueName, Double lambda){
-        
-        super(queueName,0,(double)lambda);
-        this.K = 0;
-        
-    }
-    public KShotsQueue(String queueName, Integer K, Double lambda){
-        
-        super(queueName,0,(double)lambda);
-        this.K = K;
-        
-    }
-    public KShotsQueue(String queueName, Double lambda, Integer K){
-        
-        super(queueName,0,(double)lambda);
+        super(queueName,tokens,mu,lambda);
         this.K = K;
         
     }
@@ -95,7 +62,6 @@ public class KShotsQueue extends Queue{
        pn.addPrecondition(s.getService(), serviceQ);
        pn.addPostcondition(serviceQ, s.getService());
        String condition = "Waiting"+QueueName+"=If(Arrived"+QueueName+"<"+K+",Arrived"+QueueName+","+K+");Arrived"+QueueName+"=Arrived"+QueueName+"-If(Arrived"+QueueName+"<"+K+",Arrived"+QueueName+","+K+");";
-       //System.out.println(condition);
        try{
            s.getSelect().addFeature(new PostUpdater(condition, pn));
        }catch(IllegalArgumentException ex){}
@@ -120,11 +86,12 @@ public class KShotsQueue extends Queue{
     }
 
     @Override
-    public double getMeanDelay() {
+    public double getMeanTime(Server server) {
         // TODO Auto-generated method stub
+        double gamma = server.getLast().getGamma();
         if (this.Tokens >= this.K)
-            return (1/this.getGamma())+(this.K*(1/this.getMu()));
-        else return (1/this.getGamma())+(this.Tokens*(1/this.getMu()));
+            return (1/gamma)+(this.K*(1/this.getMu()));
+        else return (1/gamma)+(this.Tokens*(1/this.getMu()));
     }
 
 }

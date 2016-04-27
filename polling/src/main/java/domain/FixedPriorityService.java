@@ -17,10 +17,11 @@ public class FixedPriorityService extends Service{
     private Place service;
     private Transition select;
     private Transition complete;
+    private Place polling;
     
     public FixedPriorityService(String name,String Prio){
         
-        super(name);
+        super(name,1);
         this.Prio = Prio;
     }
     
@@ -28,7 +29,7 @@ public class FixedPriorityService extends Service{
         
         //nodi
         service = pn.addPlace("Service"+ServiceName);
-        select = pn.addTransition("Transition"+ServiceName);
+        select = pn.addTransition("Select"+ServiceName);
         complete = pn.addTransition("Complete"+ServiceName);
         
         //transizioni
@@ -60,13 +61,19 @@ public class FixedPriorityService extends Service{
     @Override
     public Place getPolling() {
         // TODO Auto-generated method stub
-        return null;
+        return this.polling;
     }
 
     @Override
     public void setGamma(PetriNet net, double gamma) {
         // TODO Auto-generated method stub
         
+    }
+
+    @Override
+    public void setPolling(Place polling) {
+        // TODO Auto-generated method stub
+        this.polling = polling;
     }
 }
     

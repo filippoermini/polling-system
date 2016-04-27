@@ -38,14 +38,31 @@ public abstract class PetriNetModel {
     
     protected abstract void build();
     
-    protected Server getServerType(util.queueSelectionPolicy serverType, int numQueue) {
+    protected Server getServerType(util.queueSelectionPolicy serverType, Object... params) {
         Class c;
         try {
             String className = serverType.getClassName();
             c = Class.forName("domain."+className);
-            Constructor<?> cons = c.getConstructor(int.class);
-            Object[] obj = {numQueue};
-            return (Server) cons.newInstance(obj);
+            int[] paramIndex = serverType.getParams();
+            Class[] paramType = new Class[paramIndex.length];
+            Object[] param = new Object[paramIndex.length];
+            int index = 0;
+            int j = 0;
+            if (paramType.length !=0){
+                for (Object p: params){
+                    if(index<paramIndex.length && paramIndex[index]==j){
+                        paramType[index] = p.getClass();
+                        param[index] = p;
+                        index++;
+                    }
+                    j++;
+                }
+                Constructor cons = c.getConstructor(paramType);
+                return (Server) cons.newInstance(param);
+            }else{
+                Constructor cons = c.getConstructor();
+                return (Server) cons.newInstance();
+            }
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | SecurityException | IllegalArgumentException | InvocationTargetException e) {
             e.printStackTrace();
         }
@@ -55,14 +72,22 @@ public abstract class PetriNetModel {
         Class c;
         try {
             String className = queueType.getClassName();
-            Class[] paramType = new Class[params.length];
+            int[] paramIndex = queueType.getParams();
+            Class[] paramType = new Class[paramIndex.length];
+            Object[] param = new Object[paramIndex.length];
             int index = 0;
+            int j = 0;
             for (Object p: params){
-                paramType[index++] = p.getClass();
+                if (index<paramIndex.length && paramIndex[index]==j){
+                    paramType[index] = p.getClass();
+                    param[index] = p;
+                    index++;
+                }
+                j++;
             }
             c = Class.forName("domain."+className);
             Constructor cons = c.getConstructor(paramType);
-            return (Queue) cons.newInstance(params);
+            return (Queue) cons.newInstance(param);
         } catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             e.printStackTrace();
         }

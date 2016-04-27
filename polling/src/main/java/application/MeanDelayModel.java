@@ -17,8 +17,11 @@ public class MeanDelayModel extends PetriNetModel{
     private Queue queue;
     private Server server;
     private int K;
+    private double mu;
+    private double gamma;
+    private int[] prio;
 
-    public MeanDelayModel(util.queueSelectionPolicy qsp, util.queuePolicy qp, int K) {
+    public MeanDelayModel(util.queueSelectionPolicy qsp, util.queuePolicy qp, double mu, double gamma, int K, int[] prio) {
         // TODO Auto-generated constructor stub
         super();
         this.serverType = qsp;
@@ -27,16 +30,18 @@ public class MeanDelayModel extends PetriNetModel{
         this.queue = null;
         this.server = null;
         this.K = K;
+        this.mu = mu;
+        this.gamma = gamma;
+        this.prio = prio;
         build();
     }
     
     @Override
     protected void build() {
         // TODO Auto-generated method stub
-        this.server = getServerType(serverType,1);
-        this.server.create(this.Net, this.Marking);
+        this.server = getServerType(serverType,1,prio,gamma);
         this.server.addService(this.Net, this.Marking, 0, "MD");
-        this.queue = getQueue(this.queueType, "MD",0.1,this.K);
+        this.queue = getQueue(this.queueType, "MD",1,this.mu,1.0,this.K);
         this.queue.addMeanTime(this.Net, this.Marking);
         this.queue.linkToService(this.Net, this.server.getLast());
         this.server.addAbsorbent(this.Net, this.server.getLast());
@@ -53,8 +58,8 @@ public class MeanDelayModel extends PetriNetModel{
         this.Marking.setTokens(this.queue.getWaiting(),tokens);
     }
     
-    public double getMeanTimeDelay(){
-        return this.queue.getMeanDelay();
+    public double getMeanTimeToAbsorption(){
+        return this.queue.getMeanTime(this.server);
     }
 
 

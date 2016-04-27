@@ -55,39 +55,7 @@ public class FixedPointModel {
     
     private ArrayList<Results> FPResult;
     
-    public FixedPointModel(queueSelectionPolicy qsp, queuePolicy qp, int numQueue, int[] Token, int K,int[] prio,boolean info, boolean debug, String outfile){
-        
-        this.numQueue = numQueue;
-        this.K = K;
-        this.Tokens = Token;
-        this.prio = prio;
-        this.showInfo = info;
-        this.debug = debug;
-        this.outFile = outfile;
-        
-        if(!outfile.isEmpty()){
-            printOut = true;
-            File file = new File(outFile);
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
-            String execution_info = "Queue Selectrion Policy:"+qsp.toString()+" Queue Type:"+qp.toString()+(qp==util.queuePolicy.KSHOTS?" K:"+K:"")+" num Queue:"+numQueue+" Token:"+Arrays.toString(Tokens)+(qsp==util.queueSelectionPolicy.FIXED_PRIORITY?" Prio:"+Arrays.toString(prio):""+" ro:"+ro);
-            try {
-                fileWriter = new FileWriter(file);
-                fileWriter.write(sdf.format(new Date())+"\n");
-                fileWriter.write(execution_info+"\n");
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
-        
-        
-        //inizializzazione modelli
-        this.PollingModel = new PollingModel(numQueue,Token,K,prio,qp,qsp,lambda,mu,ro,gamma);
-        this.ApproximateModel = new ApproximateModel("APX",K, qsp, qp);
-        this.MeanDelayModel = new MeanDelayModel(qsp, qp,K);
-        
-        this.FPResult = new ArrayList<>();    
-    }
+    
     public FixedPointModel(queueSelectionPolicy qsp, queuePolicy qp, int numQueue, int[] Token, int K,int[] prio,boolean info, boolean debug,double mu, double gamma, double[] labda, double ro, String outfile){
         
         this.numQueue = numQueue;
@@ -118,9 +86,9 @@ public class FixedPointModel {
         }
         
         //inizializzazione modelli
-        this.PollingModel = new PollingModel(numQueue,Token,K,prio,qp,qsp,labda,mu,ro,gamma);
-        this.ApproximateModel = new ApproximateModel("APX",K, qsp, qp);
-        this.MeanDelayModel = new MeanDelayModel(qsp, qp,K);
+        this.PollingModel = new PollingModel(numQueue,Token,K,prio,qp,qsp,labda,mu,gamma,ro);
+        this.ApproximateModel = new ApproximateModel("APX",qsp,qp,K,prio,mu,gamma);
+        this.MeanDelayModel = new MeanDelayModel(qsp, qp,mu,gamma,K,prio);
         
         this.FPResult = new ArrayList<>();    
     }
@@ -143,8 +111,8 @@ public class FixedPointModel {
             Results res = new Results(this.Tokens[i]+1); 
             for(int j=0;j<this.Tokens[i]+1;j++){ //per ogni token
                 this.MeanDelayModel.setMeanDelayTokens(j);
-                res.MeanDelayResults[j] = this.MeanDelayModel.getMeanTimeDelay();
-                s = formatter.format("|      %d     |      %d       |  %.7f  |\n", i,j,this.MeanDelayModel.getMeanTimeDelay()).toString();
+                res.MeanDelayResults[j] = this.MeanDelayModel.getMeanTimeToAbsorption();
+                s = formatter.format("|      %d     |      %d       |  %.7f  |\n", i,j,this.MeanDelayModel.getMeanTimeToAbsorption()).toString();
                 
             }
             this.FPResult.add(res);
@@ -178,23 +146,23 @@ public class FixedPointModel {
                 else
                     delta = 1 / this.FPResult.get(i).D.doubleValue();
                 this.FPResult.get(i).delta = BigDecimal.valueOf(delta);
+                
                 this.ApproximateModel.setTokens(this.Tokens[i]);
+                this.ApproximateModel.setDelta(delta);
+                this.ApproximateModel.setLambda(l*lambda[i]);
+                
+                
                 
                 for(int j=0;j<this.Tokens[i]+1;j++){
-                    
-                    this.ApproximateModel.setLambda(l*lambda[i]);
-                    this.ApproximateModel.setDelta(delta);
-                    
+
                     RewardRate rw = RewardRate.fromString("If(WaitingAPX=="+j+",1,0)");
                     BigDecimal p = this.ApproximateModel.RegenerativeSteadyStateAnalysis(rw).get(rw);
                     this.FPResult.get(i).SteadyStateProbability[j] = p;  
                     
-                    BigDecimal dik = BigDecimal.valueOf(this.FPResult.get(i).MeanDelayResults[j]);
-                    di = di.add(dik.multiply(p));
+                    di = di.add(this.ApproximateModel.getServer().getMeanDelay(FPResult, i, j, p));
                 }
                 
-                s = formatter.format("Calcolo di S"+i+"(N) | delta = "+delta+"\n-----------------------------------------\n|\t\td_%d = %.4f\t\t|\n-----------------------------------------\n",i,di).toString();
-                
+                s = this.ApproximateModel.getServer().getOutpuString(i, delta, di);
                 
                 this.FPResult.get(i).d_i = di;
                 di = BigDecimal.ZERO;
@@ -211,10 +179,9 @@ public class FixedPointModel {
             //Calcolo Di//
             for(int i=0;i<this.numQueue;i++){
                 BigDecimal Di = BigDecimal.ZERO;
-                for(int j=0;j<this.numQueue;j++){
-                    if(i!=j) 
-                        Di = Di.add(this.FPResult.get(j).d_i);
-                }
+                
+                
+                Di = this.ApproximateModel.getServer().getDi(FPResult,i,numQueue);
                 
                 this.FPResult.get(i).D = Di;
                 oldDelta = this.FPResult.get(i).delta;
@@ -245,6 +212,7 @@ public class FixedPointModel {
             this.ApproximateModel.setDelta(this.FPResult.get(i).delta.doubleValue());
             this.ApproximateModel.setLambda(l*lambda[i]);
             RewardRate rw = RewardRate.fromString(l*lambda[i]+"*IdleAPX");
+            
             double Tput = this.ApproximateModel.RegenerativeSteadyStateAnalysis(rw).get(rw).doubleValue();
             double a = Tokens[i] / Tput;
             double b = l*lambda[i];
@@ -267,8 +235,9 @@ public class FixedPointModel {
         double[] E_P = new double[numQueue];
         for(int i=0;i<numQueue;i++){
             
-            //RewardRate rw = RewardRate.fromString(l*lambda[i]+"*Idle"+i);
-            double Tput = 1;//this.PollingModel.RegenerativeSteadyStateAnalysis(rw).get(rw).doubleValue();
+            RewardRate rw = RewardRate.fromString(l*lambda[i]+"*Idle"+i);
+            
+            double Tput = this.PollingModel.RegenerativeSteadyStateAnalysis(rw).get(rw).doubleValue();
             double a = Tokens[i] / Tput;
             double b = l*lambda[i];
             double c = 1/b;

@@ -16,10 +16,11 @@ public class SmartProbabilisticService extends Service{
     private Place service;
     private Transition select;
     private Transition complete;
+    private Place polling;
     
     public SmartProbabilisticService(String name){
         
-        super(name);
+        super(name,1);
     }
     
     public void add(PetriNet pn, Marking m){
@@ -60,13 +61,19 @@ public class SmartProbabilisticService extends Service{
     @Override
     public Place getPolling() {
         // TODO Auto-generated method stub
-        return null;
+        return this.polling;
     }
 
     @Override
     public void setGamma(PetriNet net, double gamma) {
         // TODO Auto-generated method stub
         
+    }
+
+    @Override
+    public void setPolling(Place polling) {
+        // TODO Auto-generated method stub
+        this.polling = polling;
     }
     
     

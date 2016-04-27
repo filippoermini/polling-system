@@ -19,18 +19,23 @@ import it.unifi.oris.sirio.petrinet.Transition;
 public class util {
     
     public enum queuePolicy {
-        EXHAUSTIVE("ExaustiveQueue","EX"),
-        ONLY_PRESENT_AT_ARRIVAL("OnlyPresentAtArrivalQueue","OP"),
-        KSHOTS("KShotsQueue","KS"),
-        SINGLESERVICE("SingleServiceQueue","SS");
+        EXHAUSTIVE("ExaustiveQueue","EX",new int[]{0,1,2,3}),
+        ONLY_PRESENT_AT_ARRIVAL("OnlyPresentAtArrivalQueue","OP",new int[]{0,1,2,3}),
+        KSHOTS("KShotsQueue","KS",new int[]{0,1,2,3,4}),
+        SINGLESERVICE("SingleServiceQueue","SS",new int[]{0,1,2,3});
         
         private String className;
         private String prefix;
-        private queuePolicy(String name,String pre){
+        private int[] params;
+        private queuePolicy(String name,String pre,int[] param){
             className = name;
             prefix = pre;
+            params = param;
         }
         
+        public int[] getParams(){
+            return params;
+        }
         public String getClassName(){
             return className;
         }
@@ -45,15 +50,20 @@ public class util {
         }
     }
     public enum queueSelectionPolicy{
-        SEQUENTIAL("Sequential","SQ"),
-        FIXED_PRIORITY("FixedPriority","FP"),
-        PROBABILISTIC_PROPOTIONAL_TO_QUEUE_LENGTH("SmartProbabilistic","PR");
+        SEQUENTIAL("Sequential","SQ",new int[]{0,2}),
+        FIXED_PRIORITY("FixedPriority","FP",new int[]{1,2}),
+        PROBABILISTIC_PROPOTIONAL_TO_QUEUE_LENGTH("SmartProbabilistic","PR",new int[]{2});
         
         private String className;
         private String prefix; 
-        private queueSelectionPolicy(String name,String pre){
+        private int[] params;
+        private queueSelectionPolicy(String name,String pre,int[] param){
             className = name;
             prefix = pre;
+            params = param;
+        }
+        public int[] getParams(){
+            return params;
         }
         public String getClassName(){
             return className;

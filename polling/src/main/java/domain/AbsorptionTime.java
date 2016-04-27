@@ -79,7 +79,7 @@ public class AbsorptionTime {
             
             BigDecimal time = BigDecimal.ZERO;
             for (int t=0; t < reward.getSamplesNumber(); t++) {
-                System.out.printf("%.2f %.5f\n", time, reward.getSolution()[t][0][0]);
+                //System.out.printf("%.2f %.5f\n", time, reward.getSolution()[t][0][0]);
                 if (reward.getSolution()[t][0][0] >= threshold) {
                     absorptionTime = time;
                 } else {

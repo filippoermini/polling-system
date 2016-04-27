@@ -16,23 +16,10 @@ public class ExaustiveQueue extends Queue{
     private Place idle;
     private Transition serviceQ;
     private Transition arrival;
-    
-    public ExaustiveQueue(String queueName,int tokens, double lambda){
+      
+    public ExaustiveQueue(String queueName,Integer tokens, Double mu, Double lambda){
         
-        super(queueName,tokens,lambda);
-        
-    }
-    
-    public ExaustiveQueue(String queueName,Integer tokens, Double lambda){
-        
-        super(queueName,tokens,(double)lambda);
-        
-    }
-    
-    public ExaustiveQueue(String queueName,Integer tokens, Double lambda, double mu, double gamma){
-        
-        super(queueName,tokens,(double)lambda,mu,gamma);
-        
+        super(queueName,tokens,mu,lambda);   
     }
     
     @Override
@@ -66,7 +53,7 @@ public class ExaustiveQueue extends Queue{
         //Generating Nodes
         this.waiting = pn.addPlace("Waiting"+QueueName);
         this.idle = pn.addPlace("Idle"+QueueName);
-        this.serviceQ = pn.addTransition("ServiceQueue"+QueueName);
+        this.serviceQ = pn.addTransition("ServiceQ"+QueueName);
         this.arrival = pn.addTransition("Arrival"+QueueName);
         
         //Generating Connectors
@@ -89,9 +76,10 @@ public class ExaustiveQueue extends Queue{
     }
 
     @Override
-    public double getMeanDelay() {
+    public double getMeanTime(Server server) {
         // TODO Auto-generated method stub
-        return 1/this.getGamma()+(this.Tokens*1/this.getMu());
+        double gamma = server.getLast().getGamma();
+        return 1/gamma+(this.Tokens*1/this.getMu());
     }
     
     

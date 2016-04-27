@@ -6,6 +6,7 @@ import application.util.queuePolicy;
 import application.util.queueSelectionPolicy;
 import domain.Approximate;
 import domain.Queue;
+import domain.Results;
 import domain.Server;
 import it.unifi.oris.sirio.models.gspn.RateExpressionFeature;
 import it.unifi.oris.sirio.models.stpn.StochasticTransitionFeature;
@@ -20,9 +21,18 @@ public class ApproximateModel extends PetriNetModel{
     private queueSelectionPolicy serverType;
     private queuePolicy queueType;
     private String queueName;
+    private Server server;
+    private Queue queue;
+    private Approximate apx;
+    private double delta;
+    private double lambda;
+    private int tokens;
+    private double mu;
+    private double gamma;
+    private int[] prio;
    
     
-    public ApproximateModel(String name, int k, queueSelectionPolicy qsp, queuePolicy qp ) {
+    public ApproximateModel(String name, queueSelectionPolicy qsp, queuePolicy qp, int k, int[] prio, double mu, double gamma) {
         // TODO Auto-generated constructor stub
         super();
         
@@ -30,21 +40,13 @@ public class ApproximateModel extends PetriNetModel{
         this.serverType = qsp;
         this.queueType = qp;
         this.queueName = name;
-        
+        this.tokens = 0;
+        this.gamma = gamma;
+        this.mu = mu;
+        this.prio = prio;
         this.build();
     }
     
-    public ApproximateModel(String name, queueSelectionPolicy qsp, queuePolicy qp) {
-        // TODO Auto-generated constructor stub
-        super();
-        
-        this.K = 0;
-        this.serverType = qsp;
-        this.queueType = qp;
-        this.queueName = name;
-        
-        this.build();
-    }
     
     @Override
     protected void build() {
@@ -52,25 +54,26 @@ public class ApproximateModel extends PetriNetModel{
         
         TransitionFeature initialDelta = StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1"));
         
-        Server sp = getServerType(this.serverType,1);
-        Approximate apx = new Approximate();
-        sp.create(this.Net, this.Marking);
-        sp.addService(this.Net, this.Marking, 0, this.queueName);
+        server = getServerType(this.serverType,1,prio,gamma);
+        apx = new Approximate();
+        //server.create(this.Net, this.Marking);
+        server.addService(this.Net, this.Marking, 0, this.queueName);
         apx.insertApproximation(this.Net, this.Marking);
         apx.setFeatures(initialDelta);
-        Queue q = getQueue(this.queueType,this.queueName,1,0.1);
-        q.add(this.Net, this.Marking);
-        q.linkToService(this.Net, sp.getLast()); 
-        sp.linkApproximate(this.Net, sp.getLast(), apx);
+        queue = getQueue(this.queueType,this.queueName,1,this.mu,1.0,1);
+        queue.add(this.Net, this.Marking);
+        queue.linkToService(this.Net, server.getLast()); 
+        server.linkApproximate(this.Net, server.getLast(), apx);
         
         //set Tokens
        
-        this.Marking.setTokens(sp.getLast().getPolling(), 1);
-        this.Marking.setTokens(sp.getLast().getService(), 0);
+        this.Marking.setTokens(server.getLast().getPolling(), 1);
+        this.Marking.setTokens(server.getLast().getService(), 0);
         
     }
     public void setTokens(int tokens){
         this.Marking.setTokens("Idle"+this.queueName, tokens);
+        this.tokens = tokens;
     }
     public void setDelta(double delta){
         Transition t = this.Net.getTransition("Delta");
@@ -81,6 +84,7 @@ public class ApproximateModel extends PetriNetModel{
         }
         t.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
         t.addFeature(new RateExpressionFeature(delta+""));
+        this.delta = delta;
     }
     public void setLambda(double lambda) {
         // TODO Auto-generated method stub
@@ -92,8 +96,12 @@ public class ApproximateModel extends PetriNetModel{
         
         t.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
         t.addFeature(new RateExpressionFeature(lambda+"*IdleAPX"));
+        this.lambda = lambda;
+    }
+    
+    public Server getServer(){
+        return this.server;
 
-        
     }
 
 }

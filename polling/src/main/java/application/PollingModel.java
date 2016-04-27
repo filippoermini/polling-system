@@ -1,5 +1,6 @@
 package application;
 
+import java.util.ArrayList;
 import java.util.stream.DoubleStream;
 
 import application.util.queuePolicy;
@@ -19,9 +20,11 @@ public class PollingModel extends PetriNetModel{
     private double ro;
     private double mu;
     private double gamma;
+    private Server server;
+    private ArrayList<Queue> queueList;
     
     
-    public PollingModel(int numq, int[] tokens, int k, int[] prio, queuePolicy qp, queueSelectionPolicy qsp, double[] lambda, double mu, double ro, double gamma) {
+    public PollingModel(int numq, int[] tokens, int k, int[] prio, queuePolicy qp, queueSelectionPolicy qsp, double[] lambda, double mu, double gamma, double ro) {
         // TODO Auto-generated constructor stub
         super();
         
@@ -33,6 +36,7 @@ public class PollingModel extends PetriNetModel{
         this.queueType = qp;
         this.lambda = lambda;
         this.mu = mu;
+        this.gamma = gamma;
         this.ro = ro;
         
         this.build();
@@ -56,14 +60,14 @@ public class PollingModel extends PetriNetModel{
         // TODO Auto-generated method stub
         double lambdaSum = DoubleStream.of(lambda).sum();
         double l = 1;
-        Server sp = getServerType(this.serverType, numQueue);
+        Server sp = getServerType(this.serverType,numQueue,prio,gamma);
         sp.create(this.Net, this.Marking);
         for (int i=0;i<numQueue;i++){
             //aggiungo un service
             sp.addService(this.Net, this.Marking,i, i+"");
             //aggiungo una coda
             if (ro != 0) l = (this.mu * this.ro)/(this.Tokens[i]*lambdaSum);
-            Queue q = getQueue(this.queueType,i+"", this.Tokens[i],l*this.lambda[i],this.K);
+            Queue q = getQueue(this.queueType,i+"", this.Tokens[i],mu,l*this.lambda[i],this.K);
             q.add(this.Net, this.Marking);
             q.linkToService(this.Net, sp.getLast());
         }    

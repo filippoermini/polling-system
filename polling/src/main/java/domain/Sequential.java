@@ -1,5 +1,11 @@
 package domain;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Formatter;
+
+import application.ApproximateModel;
+import it.unifi.oris.sirio.models.stpn.RewardRate;
 import it.unifi.oris.sirio.petrinet.Marking;
 import it.unifi.oris.sirio.petrinet.PetriNet;
 import it.unifi.oris.sirio.petrinet.Place;
@@ -13,9 +19,9 @@ public class Sequential extends Server{
     private int numServices;
     private Place absorbent;
    
-    public Sequential(int Services) {
+    public Sequential(Integer Services, Double gamma) {
         // TODO Auto-generated constructor stub
-        super();
+        super(gamma);
         Head = null;
         Tail = null;
         numServices = Services;
@@ -30,7 +36,7 @@ public class Sequential extends Server{
     public void addService(PetriNet pn, Marking m,int index, String serviceName) {
         // TODO Auto-generated method stub
         
-        SequentialService service = new SequentialService(serviceName);
+        SequentialService service = new SequentialService(serviceName,gamma);
         serviceList.add(service);
         service.add(pn,m);
         
@@ -73,6 +79,31 @@ public class Sequential extends Server{
         pn.removePostcondition(pn.getPostcondition(s.getComplete(), s.getPolling()));
         pn.addPostcondition(s.getComplete(), absorbent);
         
+    }
+    @Override
+    public BigDecimal getMeanDelay(ArrayList<Results> res, int index, int k, BigDecimal P) {
+     // TODO Auto-generated method stub
+        BigDecimal di = BigDecimal.ZERO;
+        BigDecimal dik = BigDecimal.valueOf(res.get(index).MeanDelayResults[k]);
+        di = di.add(dik.multiply(P));
+        return di;
+    }
+    @Override
+    public String getOutpuString(int index, double delta, BigDecimal md) {
+        // TODO Auto-generated method stub
+        Formatter formatter = new Formatter();
+        String s =  formatter.format("Calcolo di S"+index+"(N) | delta = "+delta+"\n-----------------------------------------\n|\t\td_%d = %.4f\t\t|\n-----------------------------------------\n",index,md).toString();
+        formatter.close();
+        return s;
+    }
+    @Override
+    public BigDecimal getDi(ArrayList<Results> res, int index, int numQueue) {
+        BigDecimal Di = BigDecimal.ZERO;
+        for(int j=0;j<numQueue;j++){
+            if(index!=j) 
+                Di = Di.add(res.get(j).d_i);
+        }
+        return Di;
     }
 
 }

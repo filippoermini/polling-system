@@ -16,7 +16,7 @@ import it.unifi.oris.sirio.petrinet.Transition;
 public class SingleServiceQueue extends Queue{
     
     
-    private int K;
+    
     
     private Place waiting;
     private Place idle;
@@ -24,45 +24,12 @@ public class SingleServiceQueue extends Queue{
     private Transition serviceQ;
     private Transition arrival;
     
-    public SingleServiceQueue(String queueName,int tokens, double lambda, int K){
+    public SingleServiceQueue(String queueName, Integer tokens, Double mu, Double lambda){
         
-        super(queueName,tokens,lambda);
-        this.K = K;
-        
+        super(queueName,tokens,mu,lambda);
     }
+        
     
-    public SingleServiceQueue(String queueName,Integer tokens, Double lambda, Integer K){
-        
-        super(queueName,tokens,(double)lambda);
-        this.K = K;
-        
-    }
-    
-    public SingleServiceQueue(String queueName,Integer tokens, Double lambda, Integer K, double mu, double gamma){
-        
-        super(queueName,tokens,(double)lambda,mu,gamma);
-        this.K = K;
-        
-    }
-
-    public SingleServiceQueue(String queueName, Double lambda){
-        
-        super(queueName,0,(double)lambda);
-        this.K = 0;
-        
-    }
-    public SingleServiceQueue(String queueName, Integer K, Double lambda){
-        
-        super(queueName,0,(double)lambda);
-        this.K = K;
-        
-    }
-    public SingleServiceQueue(String queueName, Double lambda, Integer K){
-        
-        super(queueName,0,(double)lambda);
-        this.K = K;
-        
-    }
     @Override
     public void add(PetriNet pn, Marking m){
         
@@ -92,8 +59,8 @@ public class SingleServiceQueue extends Queue{
     public void linkToService(PetriNet pn,Service s) {
        pn.addInhibitorArc(waiting, s.getComplete());
        pn.addPrecondition(s.getService(), serviceQ);
-       pn.addPostcondition(serviceQ, s.getPolling());
-       
+       if(s.getPolling() != null) pn.addPostcondition(serviceQ, s.getPolling());
+       else if(pn.getPlace("SelectNext") != null ) pn.addPostcondition(serviceQ, pn.getPlace("SelectNext"));
     }
     @Override
     public void addMeanTime(PetriNet pn, Marking m) {
@@ -112,11 +79,12 @@ public class SingleServiceQueue extends Queue{
     }
 
     @Override
-    public double getMeanDelay() {
+    public double getMeanTime(Server server) {
         // TODO Auto-generated method stub
+        double gamma = server.getLast().getGamma();
         if (this.Tokens >= 1)
-            return (1/this.getGamma())+(1/this.getMu());
-        else return (1/this.getGamma())+(this.Tokens*(1/this.getMu()));
+            return (1/gamma)+(1/this.getMu());
+        else return (1/gamma)+(this.Tokens*(1/this.getMu()));
     }
 
 }

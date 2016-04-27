@@ -19,8 +19,8 @@ public class SequentialService extends Service{
     private Place service;
     private Place polling;
     
-    public SequentialService(String name) {
-        super(name);
+    public SequentialService(String name, double gamma) {
+        super(name,gamma);
         // TODO Auto-generated constructor stub
     }
 
@@ -42,7 +42,7 @@ public class SequentialService extends Service{
         complete.addFeature(new Priority(new Integer("0")));
      
         select.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
-        select.addFeature(new RateExpressionFeature("294.12"));
+        select.addFeature(new RateExpressionFeature(Double.toString(gamma)));
     }
 
     @Override
@@ -69,13 +69,20 @@ public class SequentialService extends Service{
     public void setGamma(PetriNet net, double gamma) {
         // TODO Auto-generated method stub
         Transition t = net.getTransition("Select"+this.ServiceName);
+        this.gamma = gamma;
         if (t.hasFeature(StochasticTransitionFeature.class)){
             t.removeFeature(StochasticTransitionFeature.class);
             t.removeFeature(RateExpressionFeature.class);
             
         }
         t.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
-        t.addFeature(new RateExpressionFeature(gamma+""));
+        t.addFeature(new RateExpressionFeature(Double.toString(this.gamma)));
+    }
+
+    @Override
+    public void setPolling(Place polling) {
+        // TODO Auto-generated method stub
+        this.polling = polling;
     }
 
 }

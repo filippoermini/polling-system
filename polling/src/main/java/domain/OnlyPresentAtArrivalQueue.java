@@ -19,25 +19,11 @@ public class OnlyPresentAtArrivalQueue extends Queue{
     private Transition serviceQ;
     private Transition arrival;
     
-    public OnlyPresentAtArrivalQueue(String queueName, int tokens, double lambda){
+    public OnlyPresentAtArrivalQueue(String queueName, Integer tokens, Double mu, Double lambda){
         
-        super(queueName,tokens,lambda);
-     
-        
+        super(queueName,tokens,mu,lambda);
+   
     }
-    
-    public OnlyPresentAtArrivalQueue(String queueName, Integer tokens, Double lambda){
-        
-        super(queueName,tokens,(double)lambda);
-     
-        
-    }  
-    public OnlyPresentAtArrivalQueue(String queueName, Integer tokens, Double lambda, double mu, double gamma){
-        
-        super(queueName,tokens,(double)lambda,mu,gamma);
-     
-        
-    }   
     @Override
     public void add(PetriNet pn, Marking m){
         
@@ -68,8 +54,14 @@ public class OnlyPresentAtArrivalQueue extends Queue{
        pn.addInhibitorArc(waiting, s.getComplete());
        pn.addPrecondition(s.getService(), serviceQ);
        pn.addPostcondition(serviceQ, s.getService());
-       s.getSelect().addFeature(new PostUpdater("Waiting"+QueueName+"=Arrived"+QueueName+",Arrived"+QueueName+"=0", pn));
-        
+       String condition = "Waiting"+QueueName+"=Arrived"+QueueName+",Arrived"+QueueName+"=0";
+       try{
+           s.getSelect().addFeature(new PostUpdater(condition, pn));
+       }catch(IllegalArgumentException ex){}
+       try{
+           s.getSelect().addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
+           s.getSelect().addFeature(new RateExpressionFeature("1"));
+       }catch(IllegalArgumentException ex){}
     }
     @Override
     public void addMeanTime(PetriNet pn, Marking m) {
@@ -89,9 +81,10 @@ public class OnlyPresentAtArrivalQueue extends Queue{
     }
 
     @Override
-    public double getMeanDelay() {
+    public double getMeanTime(Server server) {
         // TODO Auto-generated method stub
-        return 1/this.getGamma()+(this.Tokens*1/this.getMu());
+        double gamma = server.getLast().getGamma();
+        return 1/gamma+(this.Tokens*1/this.getMu());
     }
 
 }

@@ -34,8 +34,8 @@ public class PollingRunner {
         int i=0;
         int numQ = 0;
         int K = 0;
-        double mu = 0;
-        double gamma = 0;
+        double mu = 1;
+        double gamma = 1;
         String arg = "";
         util.queuePolicy qp = null;
         util.queueSelectionPolicy sp = null;
@@ -216,13 +216,8 @@ public class PollingRunner {
         res+= "----------------------------------------------------------\n";
         
         for(int j=0;j<ro.length;j++){
-            if (mu == 0 || gamma == 0){
-                fp = new FixedPointModel(sp, qp, numQ, tokens, K, prio, showInfo, step, outFile+j+"."+ext);
-                
-            }else{
-                fp = new FixedPointModel(sp, qp, numQ, tokens, K, prio, showInfo, step, mu , gamma,lambda,ro[j], outFile+j+"."+ext);
-            }
-        
+            
+            fp = new FixedPointModel(sp, qp, numQ, tokens, K, prio, showInfo, step, mu ,gamma,lambda,ro[j], outFile+j+"."+ext);
             results[j] = fp.fixedPointIteration();
             double error = (Math.abs(results[j][0] - results[j][1]))*100/results[j][1];
             s = formatter.format("| %.1f |\t%.7f\t|\t%.7f\t| %.3f\t|\n",ro[j],results[j][0],results[j][1],error).toString();
@@ -231,6 +226,7 @@ public class PollingRunner {
         res += s;
         res+= "----------------------------------------------------------\n";
         System.out.println(res);
+        formatter.close();
         if(outFile!= ""){
             File file = new File(outFile+"Res."+ext);
             FileWriter fileWriter = new FileWriter(file);
