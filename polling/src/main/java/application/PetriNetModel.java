@@ -20,6 +20,7 @@ import it.unifi.oris.sirio.models.stpn.steadystate.RegenerativeSteadyStateAnalys
 import it.unifi.oris.sirio.models.stpn.steadystate.SteadyStateInitialStateBuilder;
 import it.unifi.oris.sirio.models.stpn.steadystate.SteadyStatePostProcessor;
 import it.unifi.oris.sirio.models.stpn.steadystate.SteadyStateSolution;
+import it.unifi.oris.sirio.petrinet.InhibitorArc;
 import it.unifi.oris.sirio.petrinet.Marking;
 import it.unifi.oris.sirio.petrinet.MarkingCondition;
 import it.unifi.oris.sirio.petrinet.PetriNet;
@@ -97,6 +98,7 @@ public abstract class PetriNetModel {
     
     public void showInfo(){
         System.out.println(Net);
+        System.out.println(Marking);
         for (Transition t: Net.getTransitions()) {
             System.out.println(t.getName());
             StochasticTransitionFeature f = t.getFeature(StochasticTransitionFeature.class);

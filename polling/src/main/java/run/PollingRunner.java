@@ -7,12 +7,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.Formatter;
 import java.util.Properties;
 import java.util.Scanner;
 import application.ApproximateModel;
 import application.FixedPointModel;
+import application.OutputTable;
 import application.util;
 import it.unifi.oris.sirio.models.stpn.RewardRate;
 
@@ -208,29 +211,28 @@ public class PollingRunner {
             
         }
         FixedPointModel fp;
+        OutputTable table = new OutputTable(4,"");
         double[][] results = new double[ro.length][2]; 
-        Formatter formatter = new Formatter();
-        String s = "";
-        String res = "----------------------------------------------------------\n";
-        res+="| ro  |\tModel Si(N)\t|\tPolling System\t| error\t|\n";
-        res+= "----------------------------------------------------------\n";
-        
+        table.setHeader("ro","Si(N)","Polling System","error %");
+        table.setFormat("","%.7f","%.7f","%.2f");
         for(int j=0;j<ro.length;j++){
             
             fp = new FixedPointModel(sp, qp, numQ, tokens, K, prio, showInfo, step, mu ,gamma,lambda,ro[j], outFile+j+"."+ext);
             results[j] = fp.fixedPointIteration();
             double error = (Math.abs(results[j][0] - results[j][1]))*100/results[j][1];
-            s = formatter.format("| %.1f |\t%.7f\t|\t%.7f\t| %.3f\t|\n",ro[j],results[j][0],results[j][1],error).toString();
+            table.addRecord(ro[j],results[j][0],results[j][1],error);
             
         }
-        res += s;
-        res+= "----------------------------------------------------------\n";
+        String res = table.printTable();
+        
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
+        String execution_info = "Queue Selection Policy:"+sp.toString()+" Queue Type:"+qp.toString()+(qp==util.queuePolicy.KSHOTS?" K:"+K:"")+" num Queue:"+numQ+" Token:"+Arrays.toString(tokens)+(sp==util.queueSelectionPolicy.FIXED_PRIORITY?" Prio:"+Arrays.toString(prio):"");
+        
         System.out.println(res);
-        formatter.close();
         if(outFile!= ""){
             File file = new File(outFile+"Res."+ext);
             FileWriter fileWriter = new FileWriter(file);
-            fileWriter.write(res);
+            fileWriter.write(sdf.format(new Date())+"\n"+execution_info+"\n"+res);
             fileWriter.flush();
             fileWriter.close();
         }

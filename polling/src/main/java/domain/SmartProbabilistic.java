@@ -4,8 +4,11 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Formatter;
 
+import application.ApproximateModel;
+import application.PetriNetModel;
 import it.unifi.oris.sirio.math.OmegaBigDecimal;
 import it.unifi.oris.sirio.models.gspn.RateExpressionFeature;
+import it.unifi.oris.sirio.models.gspn.WeightExpressionFeature;
 import it.unifi.oris.sirio.models.stpn.StochasticTransitionFeature;
 import it.unifi.oris.sirio.petrinet.Marking;
 import it.unifi.oris.sirio.petrinet.PetriNet;
@@ -53,8 +56,8 @@ public class SmartProbabilistic extends Server{
         service.add(pn, m);
         
         //connessione alla struttura principale
-        pn.addPrecondition(ready, service.getSelect());
-        pn.addPostcondition(service.getComplete(), selectNext);
+        if(ready != null) pn.addPrecondition(ready, service.getSelect());
+        if(selectNext != null) pn.addPostcondition(service.getComplete(), selectNext);
   
      
     }
@@ -69,7 +72,17 @@ public class SmartProbabilistic extends Server{
         pn.addPostcondition(s.getComplete(), a.getPlace());
         pn.addPostcondition(a.getTransition(), polling);
         pn.addPrecondition(polling, s.getSelect());
-        pn.addPostcondition(pn.getTransition("ServiceQAPX"), a.getPlace());
+        if(pn.getPostcondition(pn.getTransition("ServiceQAPX"), s.getService()) == null)
+            pn.addPostcondition(pn.getTransition("ServiceQAPX"), a.getPlace());
+        Transition t = s.getSelect();
+        if (t.hasFeature(StochasticTransitionFeature.class)){
+            t.removeFeature(WeightExpressionFeature.class);
+            t.removeFeature(StochasticTransitionFeature.class);
+            t.removeFeature(RateExpressionFeature.class);
+        }
+        t.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
+        t.addFeature(new RateExpressionFeature(gamma+""));
+        
     }
 
     @Override
@@ -91,33 +104,35 @@ public class SmartProbabilistic extends Server{
     @Override
     public BigDecimal getMeanDelay(ArrayList<Results> res, int index, int k, BigDecimal P) {
         // TODO Auto-generated method stub
-    
-        BigDecimal wi = BigDecimal.ZERO;
-        wi = wi.add(BigDecimal.valueOf(k).multiply(P));
-        return wi;
+        return BigDecimal.valueOf(res.get(index).MeanDelayResults[k]).multiply(P);
+        
     }
 
     @Override
-    public String getOutpuString(int index, double delta, BigDecimal md) {
+    public String getOutpuString(int index) {
         // TODO Auto-generated method stub
-        Formatter formatter = new Formatter();
-        String s =  formatter.format("Calcolo di S"+index+"(N) | delta = "+delta+"\n-----------------------------------------\n|\t\tw_%d = %.4f\t\t|\n-----------------------------------------\n",index,md).toString();
-        formatter.close();
-        return s;
+        return "w_"+index;
     }
 
     @Override
-    public BigDecimal getDi(ArrayList<Results> res, int index, int numQueue) {
+    public BigDecimal getDi(ApproximateModel pm, ArrayList<Results> res, int index, int numQueue) {
         // TODO Auto-generated method stub
         BigDecimal[] weights = new BigDecimal[numQueue];
         BigDecimal[] meanSojourns = new BigDecimal[numQueue];
         int i=0;
         for(Results r: res){
-            weights[i] = r.d_i;
-            meanSojourns[i] = BigDecimal.valueOf(r.MeanDelayResults[r.MeanDelayResults.length-1]);
+            weights[i] = r.w_i;
+            meanSojourns[i] = r.d_i;
             i++;
         }
-        return AbsorptionTime.compute(index, 0.999, weights, meanSojourns);
+        //meanSojourns = this.getLast().getQueue().getMeanSojourns(pm, res, i, numQueue);
+        return BigDecimal.valueOf(AbsorptionTime.compute(index, 0.999, weights, meanSojourns).doubleValue());
+    }
+
+    @Override
+    public BigDecimal getWeights(int k, BigDecimal P) {
+        // TODO Auto-generated method stub
+        return BigDecimal.valueOf(k).multiply(P);
     }
   
     

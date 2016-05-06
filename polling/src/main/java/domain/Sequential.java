@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Formatter;
 
 import application.ApproximateModel;
+import application.PetriNetModel;
 import it.unifi.oris.sirio.models.stpn.RewardRate;
 import it.unifi.oris.sirio.petrinet.Marking;
 import it.unifi.oris.sirio.petrinet.PetriNet;
@@ -89,21 +90,23 @@ public class Sequential extends Server{
         return di;
     }
     @Override
-    public String getOutpuString(int index, double delta, BigDecimal md) {
+    public String getOutpuString(int index) {
         // TODO Auto-generated method stub
-        Formatter formatter = new Formatter();
-        String s =  formatter.format("Calcolo di S"+index+"(N) | delta = "+delta+"\n-----------------------------------------\n|\t\td_%d = %.4f\t\t|\n-----------------------------------------\n",index,md).toString();
-        formatter.close();
-        return s;
+        return "d_"+index;
     }
     @Override
-    public BigDecimal getDi(ArrayList<Results> res, int index, int numQueue) {
+    public BigDecimal getDi(ApproximateModel pm, ArrayList<Results> res, int index, int numQueue) {
         BigDecimal Di = BigDecimal.ZERO;
         for(int j=0;j<numQueue;j++){
             if(index!=j) 
                 Di = Di.add(res.get(j).d_i);
         }
         return Di;
+    }
+    @Override
+    public BigDecimal getWeights(int k, BigDecimal P) {
+        // TODO Auto-generated method stub
+        return BigDecimal.ZERO;
     }
 
 }

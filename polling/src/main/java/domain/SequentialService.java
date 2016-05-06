@@ -66,9 +66,9 @@ public class SequentialService extends Service{
     }
 
     @Override
-    public void setGamma(PetriNet net, double gamma) {
+    public void setGamma(double gamma) {
         // TODO Auto-generated method stub
-        Transition t = net.getTransition("Select"+this.ServiceName);
+        Transition t = this.select;
         this.gamma = gamma;
         if (t.hasFeature(StochasticTransitionFeature.class)){
             t.removeFeature(StochasticTransitionFeature.class);

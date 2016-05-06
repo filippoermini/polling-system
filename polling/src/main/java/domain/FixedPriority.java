@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Formatter;
 
+import application.ApproximateModel;
+import application.PetriNetModel;
 import it.unifi.oris.sirio.math.OmegaBigDecimal;
 import it.unifi.oris.sirio.models.gspn.RateExpressionFeature;
 import it.unifi.oris.sirio.models.stpn.StochasticTransitionFeature;
@@ -100,26 +102,29 @@ public class FixedPriority extends Server{
     }
 
     @Override
-    public String getOutpuString(int index, double delta, BigDecimal md) {
+    public String getOutpuString(int index) {
         // TODO Auto-generated method stub
-        Formatter formatter = new Formatter();
-        String s =  formatter.format("Calcolo di S"+index+"(N) | delta = "+delta+"\n-----------------------------------------\n|\t\tw_%d = %.4f\t\t|\n-----------------------------------------\n",index,md).toString();
-        formatter.close();
-        return s;
+        return "w_"+index;
     }
 
     @Override
-    public BigDecimal getDi(ArrayList<Results> res, int index, int numQueue) {
+    public BigDecimal getDi(ApproximateModel pm, ArrayList<Results> res, int index, int numQueue) {
      // TODO Auto-generated method stub
-        BigDecimal[] weights = new BigDecimal[numQueue];
+        BigDecimal[] prio = new BigDecimal[numQueue];
         BigDecimal[] meanSojourns = new BigDecimal[numQueue];
         int i=0;
         for(Results r: res){
-            weights[i] = r.d_i;
-            meanSojourns[i] = BigDecimal.valueOf(r.MeanDelayResults[r.MeanDelayResults.length-1]);
+            prio[i] = r.d_i;
             i++;
         }
-        return AbsorptionTime.compute(index, 0.999, weights, meanSojourns);
+        meanSojourns = this.getLast().getQueue().getMeanSojourns(pm, res, i, numQueue);
+        return BigDecimal.valueOf(1/AbsorptionTime.compute(index, 0.999, prio, meanSojourns).doubleValue());
+    }
+
+    @Override
+    public BigDecimal getWeights(int k, BigDecimal P) {
+        // TODO Auto-generated method stub
+        return null;
     }
   
     

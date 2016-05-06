@@ -1,9 +1,15 @@
 package domain;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+
+import application.ApproximateModel;
+import application.PetriNetModel;
+import application.PollingModel;
 import it.unifi.oris.sirio.math.OmegaBigDecimal;
 import it.unifi.oris.sirio.models.gspn.RateExpressionFeature;
 import it.unifi.oris.sirio.models.pn.PostUpdater;
+import it.unifi.oris.sirio.models.stpn.RewardRate;
 import it.unifi.oris.sirio.models.stpn.StochasticTransitionFeature;
 import it.unifi.oris.sirio.petrinet.Marking;
 import it.unifi.oris.sirio.petrinet.PetriNet;
@@ -81,10 +87,22 @@ public class OnlyPresentAtArrivalQueue extends Queue{
     }
 
     @Override
-    public double getMeanTime(Server server) {
+    public double getMeanTime(double gamma) {
         // TODO Auto-generated method stub
-        double gamma = server.getLast().getGamma();
         return 1/gamma+(this.Tokens*1/this.getMu());
+    }
+    @Override
+    public BigDecimal[] getMeanSojourns(ApproximateModel pm, ArrayList<Results> res, double gamma, int numQueue) {
+        BigDecimal[] di = new BigDecimal[numQueue];
+        for(int i=0;i<numQueue;i++){
+            di[i] = res.get(i).d_i.multiply(BigDecimal.valueOf(1/mu)).add(BigDecimal.valueOf(1/gamma));
+        }
+        return di;
+    }
+    @Override
+    public BigDecimal getSojournTime(BigDecimal di, BigDecimal Ni) {
+        // TODO Auto-generated method stub
+        return Ni.multiply(new BigDecimal(1/this.mu)).add(new BigDecimal(1/this.gamma));
     }
 
 }

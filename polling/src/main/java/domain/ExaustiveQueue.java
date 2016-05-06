@@ -1,8 +1,14 @@
 package domain;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+
+import application.ApproximateModel;
+import application.PetriNetModel;
+import application.PollingModel;
 import it.unifi.oris.sirio.math.OmegaBigDecimal;
 import it.unifi.oris.sirio.models.gspn.RateExpressionFeature;
+import it.unifi.oris.sirio.models.stpn.RewardRate;
 import it.unifi.oris.sirio.models.stpn.StochasticTransitionFeature;
 import it.unifi.oris.sirio.petrinet.Marking;
 import it.unifi.oris.sirio.petrinet.PetriNet;
@@ -76,13 +82,31 @@ public class ExaustiveQueue extends Queue{
     }
 
     @Override
-    public double getMeanTime(Server server) {
-        // TODO Auto-generated method stub
-        double gamma = server.getLast().getGamma();
+    public double getMeanTime(double gamma) {
+        
         return 1/gamma+(this.Tokens*1/this.getMu());
     }
-    
-    
 
+    @Override
+    public BigDecimal[] getMeanSojourns(ApproximateModel pm, ArrayList<Results> res, double gamma, int numQueue) {
+        // TODO Auto-generated method stub
+        BigDecimal[] di = new BigDecimal[numQueue];
+        for(int i=0;i<numQueue;i++){
+            BigDecimal d = BigDecimal.ZERO;
+            pm.setParams(Tokens, res.get(i).lambda_i, res.get(i).delta.doubleValue());
+            for(int j=0;j<this.Tokens+1;j++){
+                RewardRate rw = RewardRate.fromString("If(Waiting"+this.QueueName+"=="+j+",1,0)");
+                BigDecimal p = pm.RegenerativeSteadyStateAnalysis(rw).get(rw);
+                d = d.add(SojournsTime.compute(j, this.Tokens, res.get(i).lambda_i, mu, 0.999).multiply(p));
+            }
+            di[i] = d;
+        }
+        return di;
+    }
 
+    @Override
+    public BigDecimal getSojournTime(BigDecimal di, BigDecimal Ni) {
+        // TODO Auto-generated method stub
+        return di;
+    }
 }

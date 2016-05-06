@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 
 import it.unifi.oris.sirio.analyzer.SuccessionProcessor;
 import it.unifi.oris.sirio.math.OmegaBigDecimal;
+import it.unifi.oris.sirio.models.gspn.RateExpressionFeature;
 import it.unifi.oris.sirio.models.stpn.DeterministicEnablingState;
 import it.unifi.oris.sirio.models.stpn.DeterministicEnablingStateBuilder;
 import it.unifi.oris.sirio.models.stpn.EnablingSyncsEvaluator;
@@ -16,6 +17,7 @@ import it.unifi.oris.sirio.models.stpn.RewardRate;
 import it.unifi.oris.sirio.models.stpn.StochasticTransitionFeature;
 import it.unifi.oris.sirio.models.stpn.TransientSolution;
 import it.unifi.oris.sirio.models.stpn.policy.TruncationPolicy;
+import it.unifi.oris.sirio.models.tpn.Priority;
 import it.unifi.oris.sirio.petrinet.Marking;
 import it.unifi.oris.sirio.petrinet.MarkingCondition;
 import it.unifi.oris.sirio.petrinet.PetriNet;
@@ -33,15 +35,15 @@ public class AbsorptionTime {
         for (int i = 0; i < weights.length; i++) {
             Transition select = pn.addTransition("select"+i);
             select.addFeature(StochasticTransitionFeature.newDeterministicInstance(BigDecimal.ZERO, weights[i]));
-
             Place p = pn.addPlace("p"+i);
             pn.addPrecondition(start, select);
             pn.addPostcondition(select, p);
             
             if (i != target) {
                 Transition sojourn = pn.addTransition("sojourn"+i);
-                sojourn.addFeature(StochasticTransitionFeature.newDeterministicInstance(meanSojourns[i]));
-                
+                Double time = (meanSojourns[i].doubleValue());
+                sojourn.addFeature(StochasticTransitionFeature.newDeterministicInstance(new BigDecimal(time), new BigDecimal("1")));
+                sojourn.addFeature(new Priority(new Integer("0")));
                 pn.addPrecondition(p, sojourn);
                 pn.addPostcondition(sojourn, start);
             }
@@ -49,6 +51,7 @@ public class AbsorptionTime {
 
         Marking m = new Marking();
         m.addTokens(start, 1);
+       
         
         BigDecimal sojournsSum = BigDecimal.ZERO;
         // BigDecimal sojournsMin = null;

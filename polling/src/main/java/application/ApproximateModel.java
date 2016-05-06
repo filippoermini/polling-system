@@ -24,8 +24,7 @@ public class ApproximateModel extends PetriNetModel{
     private Server server;
     private Queue queue;
     private Approximate apx;
-    private double delta;
-    private double lambda;
+    private double delta; 
     private int tokens;
     private double mu;
     private double gamma;
@@ -58,12 +57,14 @@ public class ApproximateModel extends PetriNetModel{
         apx = new Approximate();
         //server.create(this.Net, this.Marking);
         server.addService(this.Net, this.Marking, 0, this.queueName);
+        server.getLast().setGamma(gamma);
         apx.insertApproximation(this.Net, this.Marking);
         apx.setFeatures(initialDelta);
         queue = getQueue(this.queueType,this.queueName,1,this.mu,1.0,1);
         queue.add(this.Net, this.Marking);
         queue.linkToService(this.Net, server.getLast()); 
         server.linkApproximate(this.Net, server.getLast(), apx);
+        server.getLast().setQueue(queue);;
         
         //set Tokens
        
@@ -71,8 +72,14 @@ public class ApproximateModel extends PetriNetModel{
         this.Marking.setTokens(server.getLast().getService(), 0);
         
     }
+    public void setParams(int tokens, double lambda, double delta){
+        this.setTokens(tokens);
+        this.setDelta(delta);
+        this.setLambda(lambda);
+    }
     public void setTokens(int tokens){
         this.Marking.setTokens("Idle"+this.queueName, tokens);
+        this.queue.setTokens(tokens);
         this.tokens = tokens;
     }
     public void setDelta(double delta){
@@ -88,15 +95,15 @@ public class ApproximateModel extends PetriNetModel{
     }
     public void setLambda(double lambda) {
         // TODO Auto-generated method stub
-        Transition t = this.Net.getTransition("ArrivalAPX");
+        Transition t = this.Net.getTransition("Arrival"+this.queueName);
         if (t.hasFeature(StochasticTransitionFeature.class)){
             t.removeFeature(StochasticTransitionFeature.class);
             t.removeFeature(RateExpressionFeature.class);
         }
         
         t.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
-        t.addFeature(new RateExpressionFeature(lambda+"*IdleAPX"));
-        this.lambda = lambda;
+        t.addFeature(new RateExpressionFeature(lambda+"*Idle"+this.queueName));
+        queue.setLambda(lambda);
     }
     
     public Server getServer(){

@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Formatter;
 
+import application.ApproximateModel;
 import application.PetriNetModel;
 import it.unifi.oris.sirio.math.OmegaBigDecimal;
 import it.unifi.oris.sirio.models.gspn.RateExpressionFeature;
@@ -94,9 +95,7 @@ public class Uniform extends Server{
     public BigDecimal getMeanDelay(ArrayList<Results> res, int index, int k, BigDecimal P) {
         // TODO Auto-generated method stub
     
-        BigDecimal wi = BigDecimal.ZERO;
-        wi = wi.add(BigDecimal.valueOf(k).multiply(P));
-        return wi;
+        return BigDecimal.valueOf(res.get(index).MeanDelayResults[k]).multiply(P);
     }
 
     @Override
@@ -106,7 +105,7 @@ public class Uniform extends Server{
     }
 
     @Override
-    public BigDecimal getDi(PetriNetModel pm, ArrayList<Results> res, int index, int numQueue) {
+    public BigDecimal getDi(ApproximateModel pm, ArrayList<Results> res, int index, int numQueue) {
         // TODO Auto-generated method stub
         BigDecimal[] weights = new BigDecimal[numQueue];
         BigDecimal[] meanSojourns = new BigDecimal[numQueue];
@@ -117,7 +116,13 @@ public class Uniform extends Server{
             i++;
         }
         meanSojourns = this.getLast().getQueue().getMeanSojourns(pm, res, i, numQueue);
-        return BigDecimal.valueOf(1/AbsorptionTime.compute(index, 0.999, weights, meanSojourns,null).doubleValue());
+        return BigDecimal.valueOf(1/AbsorptionTime.compute(index, 0.999, weights, meanSojourns).doubleValue());
+    }
+
+    @Override
+    public BigDecimal getWeights(int k, BigDecimal P) {
+        // TODO Auto-generated method stub
+        return BigDecimal.valueOf(k).multiply(P);
     }
   
     

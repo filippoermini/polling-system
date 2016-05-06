@@ -59,7 +59,7 @@ public class MeanDelayModel extends PetriNetModel{
     }
     
     public double getMeanTimeToAbsorption(){
-        return this.queue.getMeanTime(this.server);
+        return this.queue.getMeanTime(this.server.getGamma());
     }
 
 

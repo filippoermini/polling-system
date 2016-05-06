@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 
 import application.ApproximateModel;
+import application.PetriNetModel;
 import it.unifi.oris.sirio.petrinet.Marking;
 import it.unifi.oris.sirio.petrinet.PetriNet;
 
@@ -25,8 +26,12 @@ public abstract class Server {
     public abstract void linkApproximate(PetriNet pn,Service s, Approximate a);
     public abstract void addAbsorbent(PetriNet pn,Service s);
     public abstract BigDecimal getMeanDelay(ArrayList<Results> res, int index, int k, BigDecimal P);
-    public abstract String getOutpuString(int index, double delta, BigDecimal md);
-    public abstract BigDecimal getDi(ArrayList<Results> res, int index, int numQueue);
+    public abstract BigDecimal getWeights(int k, BigDecimal P);
+    public abstract String getOutpuString(int index);
+    public abstract BigDecimal getDi(ApproximateModel pm, ArrayList<Results> res, int index, int numQueue);
+    public double getGamma(){
+        return gamma;
+    }
     
     public Service getServiceAtIndex(int index){
         if (!serviceList.isEmpty())
