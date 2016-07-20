@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import application.ApproximateModel;
 import application.PetriNetModel;
 import application.PollingModel;
+import application.util;
+import feature_transition.TransitionManager;
 import it.unifi.oris.sirio.math.OmegaBigDecimal;
 import it.unifi.oris.sirio.models.gspn.RateExpressionFeature;
 import it.unifi.oris.sirio.models.stpn.RewardRate;
@@ -15,7 +17,7 @@ import it.unifi.oris.sirio.petrinet.PetriNet;
 import it.unifi.oris.sirio.petrinet.Place;
 import it.unifi.oris.sirio.petrinet.Transition;
 
-public class ExaustiveQueue extends Queue{
+public class ExhaustiveQueue extends Queue{
     
     
     private Place waiting;
@@ -23,7 +25,7 @@ public class ExaustiveQueue extends Queue{
     private Transition serviceQ;
     private Transition arrival;
       
-    public ExaustiveQueue(String queueName,Integer tokens, Double mu, Double lambda){
+    public ExhaustiveQueue(String queueName,Integer tokens, TransitionManager mu, Double lambda, Integer K){
         
         super(queueName,tokens,mu,lambda);   
     }
@@ -42,7 +44,7 @@ public class ExaustiveQueue extends Queue{
         this.serviceQ = pn.addTransition("ServiceQ"+QueueName);
         
         pn.addPrecondition(waiting, serviceQ);
-        serviceQ.addFeature(StochasticTransitionFeature.newUniformInstance(new OmegaBigDecimal("1"), new OmegaBigDecimal("3")));
+        serviceQ.addFeature(mu.getFeatureTransition());
         m.setTokens(waiting, this.Tokens); 
         
     }
@@ -72,9 +74,10 @@ public class ExaustiveQueue extends Queue{
         arrival.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
         arrival.addFeature(new RateExpressionFeature(lambda+"*Idle"+QueueName));
         
+        serviceQ.addFeature(mu.getFeatureTransition());
         //serviceQ.addFeature(StochasticTransitionFeature.newUniformInstance(new OmegaBigDecimal("1"), new OmegaBigDecimal("3")));
-        serviceQ.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
-        serviceQ.addFeature(new RateExpressionFeature(this.mu+""));
+        //serviceQ.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
+        //serviceQ.addFeature(new RateExpressionFeature(this.mu+""));
         
         m.setTokens(idle, this.Tokens);
         m.setTokens(waiting, 0);
@@ -84,11 +87,12 @@ public class ExaustiveQueue extends Queue{
     @Override
     public double getMeanTime(double gamma) {
         
-        return 1/gamma+(this.Tokens*1/this.getMu());
+        return 1/gamma+(this.Tokens*1/this.getMu().getTransitionValue());
+        
     }
 
     @Override
-    public BigDecimal[] getMeanSojourns(ApproximateModel pm, ArrayList<Results> res, double gamma, int numQueue) {
+    public BigDecimal[] getMeanSojourns(ApproximateModel.ApproximateNet pm, ArrayList<Results> res, TransitionManager gamma, int numQueue) {
         // TODO Auto-generated method stub
         BigDecimal[] di = new BigDecimal[numQueue];
         for(int i=0;i<numQueue;i++){
@@ -97,7 +101,7 @@ public class ExaustiveQueue extends Queue{
             for(int j=0;j<this.Tokens+1;j++){
                 RewardRate rw = RewardRate.fromString("If(Waiting"+this.QueueName+"=="+j+",1,0)");
                 BigDecimal p = pm.RegenerativeSteadyStateAnalysis(rw).get(rw);
-                d = d.add(SojournsTime.compute(j, this.Tokens, res.get(i).lambda_i, mu, 0.999).multiply(p));
+                d = d.add(SojournsTime.compute(j, this.Tokens, res.get(i).lambda_i, this.getMu().getTransitionValue(), 0.999).multiply(p));
             }
             di[i] = d;
         }

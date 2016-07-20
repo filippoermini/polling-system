@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import application.ApproximateModel;
 import application.PetriNetModel;
 import application.PollingModel;
+import application.util;
+import feature_transition.TransitionManager;
 import it.unifi.oris.sirio.math.OmegaBigDecimal;
 import it.unifi.oris.sirio.models.gspn.RateExpressionFeature;
 import it.unifi.oris.sirio.models.gspn.WeightExpressionFeature;
@@ -20,16 +22,12 @@ import it.unifi.oris.sirio.petrinet.Transition;
 
 public class SingleServiceQueue extends Queue{
     
-    
-    
-    
     private Place waiting;
     private Place idle;
-    private Place arrived;
     private Transition serviceQ;
     private Transition arrival;
     
-    public SingleServiceQueue(String queueName, Integer tokens, Double mu, Double lambda){
+    public SingleServiceQueue(String queueName,Integer tokens, TransitionManager mu, Double lambda, Integer K){
         
         super(queueName,tokens,mu,lambda);
     }
@@ -54,8 +52,7 @@ public class SingleServiceQueue extends Queue{
         arrival.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
         arrival.addFeature(new RateExpressionFeature(lambda+"*Idle"+QueueName));
         
-        serviceQ.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
-        serviceQ.addFeature(new RateExpressionFeature(this.mu+""));
+        serviceQ.addFeature(mu.getFeatureTransition());
         
         m.setTokens(idle, this.Tokens);
         m.setTokens(waiting, 0);
@@ -74,8 +71,7 @@ public class SingleServiceQueue extends Queue{
         this.serviceQ = pn.addTransition("ServiceQ"+QueueName);
         
         pn.addPrecondition(waiting, serviceQ);
-        serviceQ.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
-        serviceQ.addFeature(new RateExpressionFeature(this.mu+""));
+        serviceQ.addFeature(mu.getFeatureTransition());
         m.setTokens(waiting, this.Tokens); 
     }
     public Place getWaiting() {
@@ -87,13 +83,13 @@ public class SingleServiceQueue extends Queue{
     public double getMeanTime(double gamma) {
         // TODO Auto-generated method stub
         if (this.Tokens >= 1)
-            return (1/gamma)+(1/this.getMu());
-        else return (1/gamma)+(this.Tokens*(1/this.getMu()));
+            return (1/gamma)+(1/this.getMu().getTransitionValue());
+        else return (1/gamma)+(this.Tokens*(1/this.getMu().getTransitionValue()));
     }
 
 
     @Override
-    public BigDecimal[] getMeanSojourns(ApproximateModel pm, ArrayList<Results> res, double gamma, int numQueue) {
+    public BigDecimal[] getMeanSojourns(ApproximateModel.ApproximateNet pm, ArrayList<Results> res, TransitionManager gamma, int numQueue) {
         BigDecimal[] di = new BigDecimal[numQueue];
         for(int i=0;i<numQueue;i++){
             BigDecimal d = BigDecimal.ZERO;
@@ -101,7 +97,7 @@ public class SingleServiceQueue extends Queue{
             for(int j=0;j<this.Tokens+1;j++){
                 RewardRate rw = RewardRate.fromString("If(Waiting"+this.QueueName+"=="+j+",1,0)");
                 BigDecimal p = pm.RegenerativeSteadyStateAnalysis(rw).get(rw);
-                d = d.add(BigDecimal.valueOf(this.getMeanTime(gamma)).multiply(p));
+                d = d.add(BigDecimal.valueOf(this.getMeanTime(gamma.getTransitionValue())).multiply(p));
             }
             di[i] = d;
         }

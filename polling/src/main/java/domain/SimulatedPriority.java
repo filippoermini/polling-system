@@ -6,6 +6,8 @@ import java.util.Formatter;
 
 import application.ApproximateModel;
 import application.PetriNetModel;
+import application.util;
+import feature_transition.TransitionManager;
 import it.unifi.oris.sirio.math.OmegaBigDecimal;
 import it.unifi.oris.sirio.models.gspn.RateExpressionFeature;
 import it.unifi.oris.sirio.models.stpn.StochasticTransitionFeature;
@@ -14,7 +16,7 @@ import it.unifi.oris.sirio.petrinet.PetriNet;
 import it.unifi.oris.sirio.petrinet.Place;
 import it.unifi.oris.sirio.petrinet.Transition;
 
-public class FixedPriority extends Server{
+public class SimulatedPriority extends Server{
 
     
     private Place selectNext;
@@ -24,7 +26,7 @@ public class FixedPriority extends Server{
     
     private int[] prio;
     
-    public FixedPriority(int[] prio, Double gamma){
+    public SimulatedPriority(Integer numQueue, int[] prio, TransitionManager gamma){
      
         super(gamma);
         this.prio = prio;
@@ -46,13 +48,12 @@ public class FixedPriority extends Server{
         m.setTokens(selectNext, 1);
         //move.addFeature(StochasticTransitionFeature.newUniformInstance(new OmegaBigDecimal("0"), new OmegaBigDecimal("1"))); 
         
-        move.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
-        move.addFeature(new RateExpressionFeature(Double.toString(gamma)));
+        move.addFeature(gamma.getFeatureTransition());
     }
     @Override
     public void addService(PetriNet pn, Marking m,int index, String serviceName){
         
-        FixedPriorityService service = new FixedPriorityService(serviceName,prio[index]+"");
+        SimulatedPriorityService service = new SimulatedPriorityService(serviceName,prio[index]+"");
         serviceList.add(service);
         service.add(pn, m);
         
@@ -79,7 +80,7 @@ public class FixedPriority extends Server{
     }
 
     @Override
-    public void addAbsorbent(PetriNet pn, Service s) {
+    public void addAbsorbentPlace(PetriNet pn, Service s) {
         // TODO Auto-generated method stub
         if(s.getPolling() == null){
             Place polling = pn.addPlace("PollingMD");
@@ -97,8 +98,8 @@ public class FixedPriority extends Server{
     @Override
     public BigDecimal getMeanDelay(ArrayList<Results> res, int index, int k, BigDecimal P) {
         // TODO Auto-generated method stub
-        int Token = res.get(index).MeanDelayResults.length;
-        return BigDecimal.valueOf((double) prio[index]/(double)Token);
+        return BigDecimal.valueOf(res.get(index).MeanDelayResults[k]).multiply(P);
+        
     }
 
     @Override
@@ -108,23 +109,23 @@ public class FixedPriority extends Server{
     }
 
     @Override
-    public BigDecimal getDi(ApproximateModel pm, ArrayList<Results> res, int index, int numQueue) {
-     // TODO Auto-generated method stub
-        BigDecimal[] prio = new BigDecimal[numQueue];
+    public BigDecimal getDi(ApproximateModel.ApproximateNet pm, ArrayList<Results> res, int index, int numQueue) {
+        // TODO Auto-generated method stub
+        BigDecimal[] weights = new BigDecimal[numQueue];
         BigDecimal[] meanSojourns = new BigDecimal[numQueue];
         int i=0;
         for(Results r: res){
-            prio[i] = r.d_i;
+            weights[i] = r.w_i.add(BigDecimal.ONE);
+            meanSojourns[i] = r.d_i;
             i++;
         }
-        meanSojourns = this.getLast().getQueue().getMeanSojourns(pm, res, i, numQueue);
-        return BigDecimal.valueOf(1/AbsorptionTime.compute(index, 0.999, prio, meanSojourns).doubleValue());
+        return BigDecimal.valueOf(AbsorptionTime.compute(index, 0.6666, weights, meanSojourns).doubleValue());
     }
 
     @Override
-    public BigDecimal getWeights(int k, BigDecimal P) {
+    public BigDecimal getWeights(int k, int indexQ, BigDecimal P) {
         // TODO Auto-generated method stub
-        return null;
+        return k==0?new BigDecimal(prio[indexQ]):BigDecimal.ZERO;
     }
   
     

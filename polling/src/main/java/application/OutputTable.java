@@ -13,8 +13,9 @@ public class OutputTable {
     private String Title;
     private int[] maxDim;
     private int col;
+    private boolean latex;
     
-    public OutputTable(int numCol,String title){
+    public OutputTable(int numCol,String title,boolean latex){
         this.col = numCol;
         this.Header = new String[col];
         this.Format = new String[col];
@@ -23,6 +24,7 @@ public class OutputTable {
             maxDim[i] = Integer.MIN_VALUE;
         this.Record = new ArrayList<>(); 
         this.Title = title;
+        this.latex = latex;
     }
     public void setFormat(String...format){
         if(format.length==col) 
@@ -51,7 +53,9 @@ public class OutputTable {
             this.Record.add(rec);
         }
     }
-    
+    public void addSeparator(){
+        this.Record.add(null);
+    }
     public String printTable(){
         String out = "";
         int[] colDim = new int[col];
@@ -81,18 +85,32 @@ public class OutputTable {
             //System.out.println(separator);
             out += separator + "\n";
         }
+        int numRow = Record.size();
+        int rowCount = 0;
         for(String[] record:Record){
-            String row = "|";
-            for(int i=0;i<col;i++){
-                String pre = getOffset((colDim[i]+2-record[i].length()) / 2);
-                String suff = getOffset((int)Math.round((double)(colDim[i]+2-record[i].length()) / 2));
-                row += pre+record[i]+suff+"|";
+            String row = "";
+            if (record == null ){
+                if (rowCount<numRow-1){
+                    row=latex?" \\hline \\hline":separator + "\n";
+                    }
+            }
+            else{
+                row =latex?"\n":"|";
+                for(int i=0;i<col;i++){
+                    String pre = getOffset((colDim[i]+2-record[i].length()) / 2);
+                    String suff = getOffset((int)Math.round((double)(colDim[i]+2-record[i].length()) / 2));
+                    row += pre+(latex?record[i].replace("%", "\\%"):record[i])+suff+(latex?"&":"|");
+                }
+                row=latex?row.substring(0, row.length()-1)+"\\\\":row+"\n";
+          
             }
             //System.out.println(row);
-            out += row +"\n";
+            out += row;
+            rowCount++;
+            
         }
         //System.out.println(separator);
-        out += separator +"\n";
+        out +=(latex?"\\hline\n":separator+"\n");
         return out;
          
     }

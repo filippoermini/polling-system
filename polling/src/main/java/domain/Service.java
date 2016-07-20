@@ -1,9 +1,8 @@
 package domain;
 
-import java.math.BigDecimal;
 
-import it.unifi.oris.sirio.models.gspn.RateExpressionFeature;
-import it.unifi.oris.sirio.models.stpn.StochasticTransitionFeature;
+
+import feature_transition.TransitionManager;
 import it.unifi.oris.sirio.petrinet.Marking;
 import it.unifi.oris.sirio.petrinet.PetriNet;
 import it.unifi.oris.sirio.petrinet.Place;
@@ -12,10 +11,10 @@ import it.unifi.oris.sirio.petrinet.Transition;
 public abstract class Service {
 
     protected String ServiceName;
-    protected double gamma;
+    protected TransitionManager gamma;
     protected Queue queue;
     
-    public Service(String name, double gamma){
+    public Service(String name, TransitionManager gamma){
         this.ServiceName = name;
         this.gamma = gamma;
     }
@@ -30,7 +29,7 @@ public abstract class Service {
     public abstract Transition getComplete();
     public abstract Transition getSelect();
     public abstract Place getPolling();
-    public abstract void setGamma(double gamma);
+    public abstract void setGamma(TransitionManager gamma);
     public abstract void setPolling(Place polling);
     
        

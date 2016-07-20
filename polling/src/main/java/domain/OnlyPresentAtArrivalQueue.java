@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import application.ApproximateModel;
 import application.PetriNetModel;
 import application.PollingModel;
+import feature_transition.TransitionManager;
 import it.unifi.oris.sirio.math.OmegaBigDecimal;
 import it.unifi.oris.sirio.models.gspn.RateExpressionFeature;
 import it.unifi.oris.sirio.models.pn.PostUpdater;
@@ -25,7 +26,7 @@ public class OnlyPresentAtArrivalQueue extends Queue{
     private Transition serviceQ;
     private Transition arrival;
     
-    public OnlyPresentAtArrivalQueue(String queueName, Integer tokens, Double mu, Double lambda){
+    public OnlyPresentAtArrivalQueue(String queueName,Integer tokens, TransitionManager mu, Double lambda, Integer K){
         
         super(queueName,tokens,mu,lambda);
    
@@ -49,8 +50,7 @@ public class OnlyPresentAtArrivalQueue extends Queue{
         arrival.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
         arrival.addFeature(new RateExpressionFeature(lambda+"*Idle"+QueueName));
         
-        serviceQ.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
-        serviceQ.addFeature(new RateExpressionFeature(this.mu+""));
+        serviceQ.addFeature(mu.getFeatureTransition());
         
         m.setTokens(idle, this.Tokens);
         m.setTokens(waiting, 0);
@@ -89,20 +89,20 @@ public class OnlyPresentAtArrivalQueue extends Queue{
     @Override
     public double getMeanTime(double gamma) {
         // TODO Auto-generated method stub
-        return 1/gamma+(this.Tokens*1/this.getMu());
+        return 1/gamma+(this.Tokens*1/this.getMu().getTransitionValue());
     }
     @Override
-    public BigDecimal[] getMeanSojourns(ApproximateModel pm, ArrayList<Results> res, double gamma, int numQueue) {
+    public BigDecimal[] getMeanSojourns(ApproximateModel.ApproximateNet pm, ArrayList<Results> res, TransitionManager gamma, int numQueue) {
         BigDecimal[] di = new BigDecimal[numQueue];
         for(int i=0;i<numQueue;i++){
-            di[i] = res.get(i).d_i.multiply(BigDecimal.valueOf(1/mu)).add(BigDecimal.valueOf(1/gamma));
+            di[i] = res.get(i).d_i.multiply(BigDecimal.valueOf(1/mu.getTransitionValue())).add(BigDecimal.valueOf(1/gamma.getTransitionValue()));
         }
         return di;
     }
     @Override
     public BigDecimal getSojournTime(BigDecimal di, BigDecimal Ni) {
         // TODO Auto-generated method stub
-        return Ni.multiply(new BigDecimal(1/this.mu)).add(new BigDecimal(1/this.gamma));
+        return di;
     }
 
 }

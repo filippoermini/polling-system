@@ -23,6 +23,7 @@ import it.unifi.oris.sirio.petrinet.MarkingCondition;
 import it.unifi.oris.sirio.petrinet.PetriNet;
 import it.unifi.oris.sirio.petrinet.Place;
 import it.unifi.oris.sirio.petrinet.Transition;
+import it.unifi.oris.sirio.petrinet.TransitionFeature;
 
 public class AbsorptionTime {
     public static BigDecimal compute(int target, double threshold, BigDecimal[] weights, BigDecimal[] meanSojourns) {
@@ -64,10 +65,12 @@ public class AbsorptionTime {
         
         BigDecimal absorptionTime = null;
         OmegaBigDecimal timeBound = new OmegaBigDecimal(sojournsSum.multiply(new BigDecimal(20)));
-        BigDecimal step = new BigDecimal("0.1");
         
+        BigDecimal step = new BigDecimal("0.01");
+        BigDecimal mean = null;
         while (absorptionTime == null) {
             
+            //System.out.println(timeBound);
             BigDecimal error = BigDecimal.ZERO;
             SuccessionProcessor postProc = new EnablingSyncsEvaluator();
             DeterministicEnablingState initialReg = new DeterministicEnablingState(m, pn);
@@ -81,19 +84,33 @@ public class AbsorptionTime {
             TransientSolution<DeterministicEnablingState, RewardRate> reward = TransientSolution.computeRewards(false, solution, "p"+target);
             
             BigDecimal time = BigDecimal.ZERO;
-            for (int t=0; t < reward.getSamplesNumber(); t++) {
+            mean = BigDecimal.ZERO;
+            int t = 0;
+            while(t < reward.getSamplesNumber() && absorptionTime==null) {
                 //System.out.printf("%.2f %.5f\n", time, reward.getSolution()[t][0][0]);
+        
                 if (reward.getSolution()[t][0][0] >= threshold) {
                     absorptionTime = time;
+                    
                 } else {
                     time = time.add(reward.getStep());
+                    if (t>0){
+                        //System.out.printf("%f %.4f\n",time, reward.getSolution()[t][0][0]);
+                        double p = (reward.getSolution()[t][0][0] + reward.getSolution()[t-1][0][0])/2;
+                        double meanTime = (reward.getSolution()[t][0][0] - reward.getSolution()[t-1][0][0]);
+                        mean = mean.add(new BigDecimal(p*meanTime));
+                        
+                    }
                 }
+                t++;
+                
             }
             
             timeBound = timeBound.multiply(new OmegaBigDecimal(2));
         }
         
-        return absorptionTime;
+        
+        return absorptionTime;//BigDecimal.valueOf(mean.doubleValue()/absorptionTime.doubleValue());
     }
     
     //public static void main(String[] args) {

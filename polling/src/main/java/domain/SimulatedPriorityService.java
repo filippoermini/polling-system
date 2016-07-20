@@ -2,6 +2,8 @@ package domain;
 
 import java.math.BigDecimal;
 
+import application.util;
+import feature_transition.TransitionManager;
 import it.unifi.oris.sirio.models.gspn.RateExpressionFeature;
 import it.unifi.oris.sirio.models.gspn.WeightExpressionFeature;
 import it.unifi.oris.sirio.models.stpn.StochasticTransitionFeature;
@@ -11,7 +13,7 @@ import it.unifi.oris.sirio.petrinet.PetriNet;
 import it.unifi.oris.sirio.petrinet.Place;
 import it.unifi.oris.sirio.petrinet.Transition;
 
-public class FixedPriorityService extends Service{
+public class SimulatedPriorityService extends Service{
 
     private String Prio;
     
@@ -20,9 +22,9 @@ public class FixedPriorityService extends Service{
     private Transition complete;
     private Place polling;
     
-    public FixedPriorityService(String name,String Prio){
+    public SimulatedPriorityService(String name,String Prio){
         
-        super(name,1);
+        super(name, TransitionManager.getIstance(new String[]{"EXP","1"}));
         this.Prio = Prio;
     }
     
@@ -38,8 +40,8 @@ public class FixedPriorityService extends Service{
         pn.addPrecondition(service, complete);
         
         select.addFeature(StochasticTransitionFeature.newDeterministicInstance(new BigDecimal("0"), new BigDecimal("1")));
-        select.addFeature(new WeightExpressionFeature("1"));
-        select.addFeature(new Priority(new Integer(this.Prio)));
+        select.addFeature(new WeightExpressionFeature(this.Prio));
+        select.addFeature(new Priority(new Integer("0")));
         
         complete.addFeature(StochasticTransitionFeature.newDeterministicInstance(new BigDecimal("0"), new BigDecimal("1")));
         complete.addFeature(new WeightExpressionFeature("1"));
@@ -66,15 +68,14 @@ public class FixedPriorityService extends Service{
     }
 
     @Override
-    public void setGamma(double gamma) {
+    public void setGamma(TransitionManager gamma) {
         // TODO Auto-generated method stub
         
         select.removeFeature(StochasticTransitionFeature.class);
         select.removeFeature(WeightExpressionFeature.class);
         select.removeFeature(Priority.class);
            
-        select.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
-        select.addFeature(new RateExpressionFeature(Double.toString(gamma)));
+        select.addFeature(gamma.getFeatureTransition());
         
     }
 

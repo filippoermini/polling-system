@@ -1,15 +1,20 @@
 package application;
 
 import java.awt.EventQueue;
+import java.math.BigDecimal;
+import java.util.HashMap;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import domain.TransitionParams;
 import it.unifi.oris.sirio.analyzer.Analyzer;
 import it.unifi.oris.sirio.analyzer.graph.SuccessionGraph;
 import it.unifi.oris.sirio.analyzer.graph.SuccessionGraphViewer;
 import it.unifi.oris.sirio.analyzer.log.AnalysisMonitor;
 import it.unifi.oris.sirio.analyzer.policy.FIFOPolicy;
+import it.unifi.oris.sirio.math.OmegaBigDecimal;
+import it.unifi.oris.sirio.models.stpn.StochasticTransitionFeature;
 import it.unifi.oris.sirio.models.tpn.TimedComponentsFactory;
 import it.unifi.oris.sirio.petrinet.Marking;
 import it.unifi.oris.sirio.petrinet.MarkingCondition;
@@ -20,18 +25,17 @@ public class util {
     
    
     public enum queuePolicy {
-        EXHAUSTIVE("ExaustiveQueue","EX",new int[]{0,1,2,3}),
-        ONLY_PRESENT_AT_ARRIVAL("OnlyPresentAtArrivalQueue","OP",new int[]{0,1,2,3}),
-        KSHOTS("KShotsQueue","KS",new int[]{0,1,2,3,4}),
-        SINGLESERVICE("SingleServiceQueue","SS",new int[]{0,1,2,3});
+        EXHAUSTIVE("ExhaustiveQueue","EX"),
+        ONLY_PRESENT_AT_ARRIVAL("OnlyPresentAtArrivalQueue","OP"),
+        KSHOTS("KShotsQueue","KS"),
+        SINGLESERVICE("SingleServiceQueue","SS");
         
         private String className;
         private String prefix;
         private int[] params;
-        private queuePolicy(String name,String pre,int[] param){
+        private queuePolicy(String name,String pre){
             className = name;
             prefix = pre;
-            params = param;
         }
         
         public int[] getParams(){
@@ -39,6 +43,9 @@ public class util {
         }
         public String getClassName(){
             return className;
+        }
+        public String getPrefix(){
+            return prefix;
         }
         public static queuePolicy getPolicyFromPrefix(String pre){
             for(queuePolicy qp:queuePolicy.values()){
@@ -51,24 +58,22 @@ public class util {
         }
     }
     public enum queueSelectionPolicy{
-        SEQUENTIAL("Sequential","SQ",new int[]{0,2}),
-        FIXED_PRIORITY("FixedPriority","FP",new int[]{1,2}),
-        PROBABILISTIC_PROPOTIONAL_TO_QUEUE_LENGTH("SmartProbabilistic","PR",new int[]{2}),
-        UNIFORM("Uniform","UF",new int[]{2});
+        SEQUENTIAL("Sequential","SQ"),
+        SIMULATED_PRIORITY("SimulatedPriority","FP"),
+        PROBABILISTIC_PROPOTIONAL_TO_QUEUE_LENGTH("SmartProbabilistic","PR"),
+        UNIFORM("Uniform","UF");
         
         private String className;
         private String prefix; 
-        private int[] params;
-        private queueSelectionPolicy(String name,String pre,int[] param){
+        private queueSelectionPolicy(String name,String pre){
             className = name;
             prefix = pre;
-            params = param;
-        }
-        public int[] getParams(){
-            return params;
         }
         public String getClassName(){
             return className;
+        }
+        public String getPrefix(){
+            return prefix;
         }
         public static queueSelectionPolicy getPolicyFromPrefix(String pre){
             for(queueSelectionPolicy qsp:queueSelectionPolicy.values()){
@@ -123,6 +128,7 @@ public class util {
                 frame.setVisible(true);
             }
         });
+    
     }
 
 }

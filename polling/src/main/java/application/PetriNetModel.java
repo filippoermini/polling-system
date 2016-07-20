@@ -1,14 +1,8 @@
 package application;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
+
 import java.math.BigDecimal;
 import java.util.Map;
-
-import org.junit.internal.runners.model.EachTestNotifier;
-
-import domain.Queue;
-import domain.Server;
 import it.unifi.oris.sirio.analyzer.policy.FIFOPolicy;
 import it.unifi.oris.sirio.models.gspn.RateExpressionFeature;
 import it.unifi.oris.sirio.models.stpn.DeterministicEnablingState;
@@ -20,7 +14,6 @@ import it.unifi.oris.sirio.models.stpn.steadystate.RegenerativeSteadyStateAnalys
 import it.unifi.oris.sirio.models.stpn.steadystate.SteadyStateInitialStateBuilder;
 import it.unifi.oris.sirio.models.stpn.steadystate.SteadyStatePostProcessor;
 import it.unifi.oris.sirio.models.stpn.steadystate.SteadyStateSolution;
-import it.unifi.oris.sirio.petrinet.InhibitorArc;
 import it.unifi.oris.sirio.petrinet.Marking;
 import it.unifi.oris.sirio.petrinet.MarkingCondition;
 import it.unifi.oris.sirio.petrinet.PetriNet;
@@ -39,62 +32,8 @@ public abstract class PetriNetModel {
     
     protected abstract void build();
     
-    protected Server getServerType(util.queueSelectionPolicy serverType, Object... params) {
-        Class c;
-        try {
-            String className = serverType.getClassName();
-            c = Class.forName("domain."+className);
-            int[] paramIndex = serverType.getParams();
-            Class[] paramType = new Class[paramIndex.length];
-            Object[] param = new Object[paramIndex.length];
-            int index = 0;
-            int j = 0;
-            if (paramType.length !=0){
-                for (Object p: params){
-                    if(index<paramIndex.length && paramIndex[index]==j){
-                        paramType[index] = p.getClass();
-                        param[index] = p;
-                        index++;
-                    }
-                    j++;
-                }
-                Constructor cons = c.getConstructor(paramType);
-                return (Server) cons.newInstance(param);
-            }else{
-                Constructor cons = c.getConstructor();
-                return (Server) cons.newInstance();
-            }
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | SecurityException | IllegalArgumentException | InvocationTargetException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-    protected Queue getQueue(util.queuePolicy queueType, Object... params){
-        Class c;
-        try {
-            String className = queueType.getClassName();
-            int[] paramIndex = queueType.getParams();
-            Class[] paramType = new Class[paramIndex.length];
-            Object[] param = new Object[paramIndex.length];
-            int index = 0;
-            int j = 0;
-            for (Object p: params){
-                if (index<paramIndex.length && paramIndex[index]==j){
-                    paramType[index] = p.getClass();
-                    param[index] = p;
-                    index++;
-                }
-                j++;
-            }
-            c = Class.forName("domain."+className);
-            Constructor cons = c.getConstructor(paramType);
-            return (Queue) cons.newInstance(param);
-        } catch (ClassNotFoundException | NoSuchMethodException | SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-            e.printStackTrace();
-        }
-        return null;
-        
-    }
+    
+    
     
     public void showInfo(){
         System.out.println(Net);

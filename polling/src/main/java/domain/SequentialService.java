@@ -2,6 +2,8 @@ package domain;
 
 import java.math.BigDecimal;
 
+import application.util;
+import feature_transition.TransitionManager;
 import it.unifi.oris.sirio.models.gspn.RateExpressionFeature;
 import it.unifi.oris.sirio.models.gspn.WeightExpressionFeature;
 import it.unifi.oris.sirio.models.stpn.StochasticTransitionFeature;
@@ -10,7 +12,6 @@ import it.unifi.oris.sirio.petrinet.Marking;
 import it.unifi.oris.sirio.petrinet.PetriNet;
 import it.unifi.oris.sirio.petrinet.Place;
 import it.unifi.oris.sirio.petrinet.Transition;
-import it.unifi.oris.sirio.petrinet.TransitionFeature;
 
 public class SequentialService extends Service{
 
@@ -19,7 +20,7 @@ public class SequentialService extends Service{
     private Place service;
     private Place polling;
     
-    public SequentialService(String name, double gamma) {
+    public SequentialService(String name, TransitionManager gamma) {
         super(name,gamma);
         // TODO Auto-generated constructor stub
     }
@@ -40,9 +41,7 @@ public class SequentialService extends Service{
         complete.addFeature(StochasticTransitionFeature.newDeterministicInstance(new BigDecimal("0"), new BigDecimal("1")));
         complete.addFeature(new WeightExpressionFeature("1"));
         complete.addFeature(new Priority(new Integer("0")));
-     
-        select.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
-        select.addFeature(new RateExpressionFeature(Double.toString(gamma)));
+        select.addFeature(gamma.getFeatureTransition());
     }
 
     @Override
@@ -66,17 +65,16 @@ public class SequentialService extends Service{
     }
 
     @Override
-    public void setGamma(double gamma) {
+    public void setGamma(TransitionManager gamma) {
         // TODO Auto-generated method stub
         Transition t = this.select;
         this.gamma = gamma;
         if (t.hasFeature(StochasticTransitionFeature.class)){
             t.removeFeature(StochasticTransitionFeature.class);
             t.removeFeature(RateExpressionFeature.class);
-            
         }
-        t.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
-        t.addFeature(new RateExpressionFeature(Double.toString(this.gamma)));
+        StochasticTransitionFeature s = gamma.getFeatureTransition();
+        t.addFeature(s);
     }
 
     @Override

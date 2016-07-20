@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import application.ApproximateModel;
 import application.PetriNetModel;
 import application.PollingModel;
+import feature_transition.TransitionManager;
 import it.unifi.oris.sirio.math.OmegaBigDecimal;
 import it.unifi.oris.sirio.models.gspn.RateExpressionFeature;
 import it.unifi.oris.sirio.models.gspn.WeightExpressionFeature;
@@ -29,7 +30,7 @@ public class KShotsQueue extends Queue{
     private Transition serviceQ;
     private Transition arrival;
     
-    public KShotsQueue(String queueName,Integer tokens, Double mu, Double lambda, Integer K){
+    public KShotsQueue(String queueName,Integer tokens, TransitionManager mu, Double lambda, Integer K){
         
         super(queueName,tokens,mu,lambda);
         this.K = K;
@@ -55,8 +56,7 @@ public class KShotsQueue extends Queue{
         arrival.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
         arrival.addFeature(new RateExpressionFeature(lambda+"*Idle"+QueueName));
         
-        serviceQ.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
-        serviceQ.addFeature(new RateExpressionFeature(this.mu+""));
+        serviceQ.addFeature(mu.getFeatureTransition());
         
         m.setTokens(idle, this.Tokens);
         m.setTokens(waiting, 0);
@@ -94,18 +94,19 @@ public class KShotsQueue extends Queue{
     public double getMeanTime(double gamma) {
         // TODO Auto-generated method stub
         if (this.Tokens >= this.K)
-            return (1/gamma)+(this.K*(1/this.getMu()));
-        else return (1/gamma)+(this.Tokens*(1/this.getMu()));
+            return (1/gamma)+(this.K*(1/this.getMu().getTransitionValue()));
+        else return (1/gamma)+(this.Tokens*(1/this.getMu().getTransitionValue()));
     }
     @Override
-    public BigDecimal[] getMeanSojourns(ApproximateModel pm, ArrayList<Results> res, double gamma, int numQueue) {
+    public BigDecimal[] getMeanSojourns(ApproximateModel.ApproximateNet pm, ArrayList<Results> res, TransitionManager gamma, int numQueue) {
+        
         BigDecimal[] di = new BigDecimal[numQueue];
         for(int i=0;i<numQueue;i++){
             BigDecimal d = BigDecimal.ZERO;
             pm.setParams(Tokens, res.get(i).lambda_i, res.get(i).delta.doubleValue());
             for(int j=0;j<this.Tokens+1;j++){
                 RewardRate rw = RewardRate.fromString("If(Waiting"+this.QueueName+"=="+j+",1,0)");
-                d = d.add(BigDecimal.valueOf(this.getMeanTime(gamma)).multiply(pm.RegenerativeSteadyStateAnalysis(rw).get(rw)));
+                d = d.add(BigDecimal.valueOf(this.getMeanTime(gamma.getTransitionValue())).multiply(pm.RegenerativeSteadyStateAnalysis(rw).get(rw)));
             }
             di[i] = d;
         }

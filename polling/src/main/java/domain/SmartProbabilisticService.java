@@ -2,6 +2,8 @@ package domain;
 
 import java.math.BigDecimal;
 
+import application.util;
+import feature_transition.TransitionManager;
 import it.unifi.oris.sirio.models.gspn.RateExpressionFeature;
 import it.unifi.oris.sirio.models.gspn.WeightExpressionFeature;
 import it.unifi.oris.sirio.models.stpn.StochasticTransitionFeature;
@@ -21,7 +23,7 @@ public class SmartProbabilisticService extends Service{
     
     public SmartProbabilisticService(String name){
         
-        super(name,1);
+        super(name,TransitionManager.getIstance(new String[]{"EXP","1"}));
     }
     
     public void add(PetriNet pn, Marking m){
@@ -66,16 +68,14 @@ public class SmartProbabilisticService extends Service{
     }
 
     @Override
-    public void setGamma(double gamma) {
+    public void setGamma(TransitionManager gamma) {
         // TODO Auto-generated method stub
         
         select.removeFeature(StochasticTransitionFeature.class);
         select.removeFeature(WeightExpressionFeature.class);
         select.removeFeature(Priority.class);
            
-        select.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
-        select.addFeature(new RateExpressionFeature(Double.toString(gamma)));
-        
+        select.addFeature(gamma.getFeatureTransition());
     }
 
     @Override

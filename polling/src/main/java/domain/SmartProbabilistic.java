@@ -6,6 +6,8 @@ import java.util.Formatter;
 
 import application.ApproximateModel;
 import application.PetriNetModel;
+import application.util;
+import feature_transition.TransitionManager;
 import it.unifi.oris.sirio.math.OmegaBigDecimal;
 import it.unifi.oris.sirio.models.gspn.RateExpressionFeature;
 import it.unifi.oris.sirio.models.gspn.WeightExpressionFeature;
@@ -24,7 +26,7 @@ public class SmartProbabilistic extends Server{
     private Place absorbent;
     
     
-    public SmartProbabilistic(Double gamma){
+    public SmartProbabilistic(Integer numQueue, int[] prio, TransitionManager gamma){
      
         super(gamma);
     }
@@ -44,9 +46,8 @@ public class SmartProbabilistic extends Server{
         //Generating Properties
         m.setTokens(selectNext, 1);
         m.setTokens(ready, 0);
-        
-        move.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
-        move.addFeature(new RateExpressionFeature(Double.toString(gamma)));
+        StochasticTransitionFeature s = gamma.getFeatureTransition();
+        move.addFeature(s);
     }
     @Override
     public void addService(PetriNet pn, Marking m,int index, String serviceName){
@@ -80,13 +81,12 @@ public class SmartProbabilistic extends Server{
             t.removeFeature(StochasticTransitionFeature.class);
             t.removeFeature(RateExpressionFeature.class);
         }
-        t.addFeature(StochasticTransitionFeature.newExponentialInstance(new BigDecimal("1")));
-        t.addFeature(new RateExpressionFeature(gamma+""));
+        t.addFeature(gamma.getFeatureTransition());
         
     }
 
     @Override
-    public void addAbsorbent(PetriNet pn, Service s) {
+    public void addAbsorbentPlace(PetriNet pn, Service s) {
      // TODO Auto-generated method stub
         if(s.getPolling() == null){
             Place polling = pn.addPlace("PollingMD");
@@ -115,22 +115,21 @@ public class SmartProbabilistic extends Server{
     }
 
     @Override
-    public BigDecimal getDi(ApproximateModel pm, ArrayList<Results> res, int index, int numQueue) {
+    public BigDecimal getDi(ApproximateModel.ApproximateNet pm, ArrayList<Results> res, int index, int numQueue) {
         // TODO Auto-generated method stub
         BigDecimal[] weights = new BigDecimal[numQueue];
         BigDecimal[] meanSojourns = new BigDecimal[numQueue];
         int i=0;
         for(Results r: res){
-            weights[i] = r.w_i;
+            weights[i] = r.w_i.add(BigDecimal.ONE);
             meanSojourns[i] = r.d_i;
             i++;
         }
-        //meanSojourns = this.getLast().getQueue().getMeanSojourns(pm, res, i, numQueue);
-        return BigDecimal.valueOf(AbsorptionTime.compute(index, 0.999, weights, meanSojourns).doubleValue());
+        return BigDecimal.valueOf(AbsorptionTime.compute(index, 0.6, weights, meanSojourns).doubleValue());
     }
 
     @Override
-    public BigDecimal getWeights(int k, BigDecimal P) {
+    public BigDecimal getWeights(int k, int indexQ, BigDecimal P) {
         // TODO Auto-generated method stub
         return BigDecimal.valueOf(k).multiply(P);
     }

@@ -6,6 +6,7 @@ import java.util.Formatter;
 
 import application.ApproximateModel;
 import application.PetriNetModel;
+import feature_transition.TransitionManager;
 import it.unifi.oris.sirio.models.stpn.RewardRate;
 import it.unifi.oris.sirio.petrinet.Marking;
 import it.unifi.oris.sirio.petrinet.PetriNet;
@@ -20,12 +21,12 @@ public class Sequential extends Server{
     private int numServices;
     private Place absorbent;
    
-    public Sequential(Integer Services, Double gamma) {
+    public Sequential(Integer numQueue, int[] prio, TransitionManager gamma) {
         // TODO Auto-generated constructor stub
         super(gamma);
         Head = null;
         Tail = null;
-        numServices = Services;
+        numServices = numQueue;
     }
     @Override
     public void create(PetriNet pn, Marking m) {
@@ -74,7 +75,7 @@ public class Sequential extends Server{
         
     }
     @Override
-    public void addAbsorbent(PetriNet pn, Service s) {
+    public void addAbsorbentPlace(PetriNet pn, Service s) {
         // TODO Auto-generated method stub
         this.absorbent = pn.addPlace("Absorbent");
         pn.removePostcondition(pn.getPostcondition(s.getComplete(), s.getPolling()));
@@ -95,7 +96,7 @@ public class Sequential extends Server{
         return "d_"+index;
     }
     @Override
-    public BigDecimal getDi(ApproximateModel pm, ArrayList<Results> res, int index, int numQueue) {
+    public BigDecimal getDi(ApproximateModel.ApproximateNet pm, ArrayList<Results> res, int index, int numQueue) {
         BigDecimal Di = BigDecimal.ZERO;
         for(int j=0;j<numQueue;j++){
             if(index!=j) 
@@ -104,7 +105,7 @@ public class Sequential extends Server{
         return Di;
     }
     @Override
-    public BigDecimal getWeights(int k, BigDecimal P) {
+    public BigDecimal getWeights(int k, int indexQ, BigDecimal P) {
         // TODO Auto-generated method stub
         return BigDecimal.ZERO;
     }
